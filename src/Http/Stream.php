@@ -6,6 +6,7 @@ use Psr\Http\Message\StreamInterface;
 use Exception;
 use InvalidArgumentException;
 use RuntimeException;
+use Throwable;
 
 /**
  * Describes a data stream.
@@ -43,18 +44,16 @@ class Stream implements StreamInterface
 	 * @throws InvalidArgumentException
 	 */
 	public function __construct($stream, $mode = 'r') {
-		if (is_resource($stream)) {
+		if (!is_resource($stream)) {
+			try {
+				$this->stream = fopen($stream, $mode);
+			}
+			catch (Throwable $t) {
+				throw new InvalidArgumentException($t->getMessage(), $t->getCode(), $t);
+			}
+		}
+		else {
 			$this->stream = $stream;
-		}
-		elseif (is_string($stream)) {
-			$error = false;
-			set_error_handler(fn(int $errno, string $errstr, string $errfile, int $errline) => $error = true);
-			$this->stream = fopen($stream, $mode);
-			restore_error_handler();
-		}
-		
-		if (empty($this->stream) || (isset($error) && $error === true)) {
-			throw new InvalidArgumentException("Stream must be a valid resource.");
 		}
 		
 		$this->meta = stream_get_meta_data($this->stream);
@@ -82,15 +81,17 @@ class Stream implements StreamInterface
 	 * @return string
 	 */
 	public function __toString() {
-		if (!$this->stream || !$this->isReadable()) return "";
-		
 		try {
+			$offset = $this->tell();
 			$this->rewind();
-			return $this->getContents();
+			$data = $this->getContents();
+			$this->seek($offset);
 		}
 		catch (Exception $e) {
 			return "";
 		}
+		
+		return $data;
 	}
 	
 	/**
@@ -131,10 +132,13 @@ class Stream implements StreamInterface
 	 * @return int|null Returns the size in bytes if known, or null if unknown.
 	 */
 	public function getSize() : ?int {
-		if (!$this->stream) return null;
-		
-		$fstat = fstat($this->stream);
-		return (is_array($fstat) && isset($fstat['size'])) ? $fstat['size'] : null;
+		try {
+			$fstat = fstat($this->stream);
+			return $fstat['size'] ?: null;
+		}
+		catch (Throwable) {
+			return null;
+		}
 	}
 	
 	/**
@@ -144,11 +148,11 @@ class Stream implements StreamInterface
 	 * @throws \RuntimeException on error.
 	 */
 	public function tell() : int {
-		if (!$this->stream) throw new RuntimeException("Stream is in an unusable state.");
-		
-		$offset = ftell($this->stream);
-		if ($offset === false) {
-			throw new RuntimeException("An error occurred while retrieving stream offset.");
+		try {
+			$offset = ftell($this->stream);
+		}
+		catch (Throwable $t) {
+			throw new RuntimeException($t->getMessage(), $t->getCode(), $t);
 		}
 		
 		return $offset;
@@ -185,10 +189,11 @@ class Stream implements StreamInterface
 	 * @throws \RuntimeException on failure.
 	 */
 	public function seek($offset, $whence = SEEK_SET) : void {
-		if (!$this->isSeekable()) throw new RuntimeException("Stream is not seekable.");
-		
-		if (fseek($this->stream, $offset, $whence) === -1) {
-			throw new RuntimeException("An error occurred while seeking stream.");
+		try {
+			fseek($this->stream, $offset, $whence);
+		}
+		catch(Throwable $t) {
+			throw new RuntimeException($t->getMessage(), $t->getCode(), $t);
 		}
 	}
 	
@@ -223,11 +228,11 @@ class Stream implements StreamInterface
 	 * @throws \RuntimeException on failure.
 	 */
 	public function write($string) : int {
-		if (!$this->isWritable()) throw new RuntimeException("Stream is not writable.");
-		
-		$written = fwrite($this->stream, $string);
-		if ($written === false) {
-			throw new RuntimeException("An error occurred while writing stream.");
+		try {
+			$written = fwrite($this->stream, $string);
+		}
+		catch (Throwable $t) {
+			throw new RuntimeException($t->getMessage(), $t->getCode(), $t);
 		}
 		
 		return $written;
@@ -253,11 +258,11 @@ class Stream implements StreamInterface
 	 * @throws \RuntimeException if an error occurs.
 	 */
 	public function read($length) : string {
-		if (!$this->isReadable()) throw new RuntimeException("Stream is not readable.");
-		
-		$data = fread($this->stream, $length);
-		if ($data === false) {
-			throw new RuntimeException("An error occurred while writing stream.");
+		try {
+			$data = fread($this->stream, $length);
+		}
+		catch (Throwable $t) {
+			throw new RuntimeException($t->getMessage(), $t->getCode(), $t);
 		}
 		
 		return $data;
@@ -289,8 +294,8 @@ class Stream implements StreamInterface
 	 *     value is found, or null if the key is not found.
 	 */
 	public function getMetadata($key = null) : array|string|null {
-		if (!$this->stream) return null;
-		
-		return !isset($key) ? $this->meta : (isset($this->meta[$key]) ? $this->meta[$key] : null);
+		return ($this->stream && $key === null) ?
+			$this->meta :
+			(isset($this->meta[$key]) ? $this->meta[$key] : null);
 	}
 }

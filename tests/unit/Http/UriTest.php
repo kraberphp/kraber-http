@@ -3,6 +3,7 @@
 namespace Kraber\Test\Http;
 
 use Kraber\Http\Uri;
+use InvalidArgumentException;
 
 class UriTest extends \PHPUnit\Framework\TestCase {
 	/**
@@ -483,6 +484,13 @@ class UriTest extends \PHPUnit\Framework\TestCase {
 				"https://www.example.tld/"
 			],
 		];
+	}
+	
+	public function testWithPortThrowsExceptionOnInvalidPortRange() {
+		$Uri = new Uri("/");
+		
+		$this->expectException(InvalidArgumentException::class);
+		$Uri = $Uri->withPort(-1);
 	}
 	
 	/**

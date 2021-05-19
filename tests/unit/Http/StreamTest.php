@@ -8,10 +8,24 @@ use RuntimeException;
 
 class StreamTest extends \PHPUnit\Framework\TestCase
 {
-	public function testConstructThrowsExceptionOnInvalidArgument()
+	public function testConstructorThrowsExceptionOnInvalidArgument()
 	{
 		$this->expectException(InvalidArgumentException::class);
 		$stream = new Stream(true);
+	}
+	
+	public function testConstructorThrowsExceptionOnInvalidString()
+	{
+		$this->expectException(InvalidArgumentException::class);
+		$stream = new Stream("php://foo");
+	}
+	
+	public function testConstructorThrowsExceptionOnInvalidResource()
+	{
+		$this->expectException(InvalidArgumentException::class);
+		$handle = fopen('php://temp', 'r+');
+		fclose($handle);
+		$stream = new Stream($handle);
 	}
 	
 	public function testConstructorInitializesProperties()
@@ -47,6 +61,19 @@ class StreamTest extends \PHPUnit\Framework\TestCase
 		$stream->close();
 	}
 	
+	public function testEnsuresConvertsToStringPositionIsConsistent()
+	{
+		$handle = fopen('php://temp', 'w+');
+		fwrite($handle, 'data');
+		$stream = new Stream($handle);
+		$stream->seek(2);
+		$this->assertEquals(2, $stream->tell());
+		$this->assertEquals('data', (string) $stream);
+		$this->assertEquals(2, $stream->tell());
+		$this->assertEquals('data', (string) $stream);
+		$stream->close();
+	}
+	
 	public function testGetsContents()
 	{
 		$handle = fopen('php://temp', 'w+');
@@ -56,6 +83,7 @@ class StreamTest extends \PHPUnit\Framework\TestCase
 		$stream->seek(0);
 		$this->assertEquals('data', $stream->getContents());
 		$this->assertEquals('', $stream->getContents());
+		$this->assertEquals($stream->getSize(), $stream->tell());
 		$stream->close();
 	}
 	
@@ -115,22 +143,162 @@ class StreamTest extends \PHPUnit\Framework\TestCase
 	
 	public function testCanDetachStream()
 	{
-		$r = fopen('php://temp', 'w+');
-		$stream = new Stream($r);
+		$handle = fopen('php://temp', 'w+');
+		$stream = new Stream($handle);
 		$this->assertTrue($stream->isReadable());
-		$this->assertSame($r, $stream->detach());
+		$this->assertSame($handle, $stream->detach());
 		$this->assertNull($stream->detach());
 		$this->assertFalse($stream->isReadable());
-		//$this->assertSame('', $stream->read(10));
 		$this->assertFalse($stream->isWritable());
-		//$this->assertFalse($stream->write('foo'));
 		$this->assertFalse($stream->isSeekable());
-		//$this->assertFalse($stream->seek(10));
-		//$this->assertFalse($stream->tell());
 		$this->assertTrue($stream->eof());
 		$this->assertNull($stream->getSize());
 		$this->assertSame('', (string) $stream);
-		//$this->assertSame('', $stream->getContents());
 		$stream->close();
+	}
+	
+	public function testReadOnDetachedStreamThrowsException()
+	{
+		$handle = fopen('php://temp', 'w+');
+		$stream = new Stream($handle);
+		$this->assertTrue($stream->isReadable());
+		$this->assertSame($handle, $stream->detach());
+		$this->assertNull($stream->detach());
+		$this->assertFalse($stream->isReadable());
+		
+		try {
+			$this->expectException(RuntimeException::class);
+			$stream->read(10);
+		}
+		catch(RuntimeException $e) {
+			throw $e;
+		}
+		finally {
+			$stream->close();
+		}
+	}
+	
+	public function testReadErrorThrowsException()
+	{
+		$handle = fopen('php://temp', 'w+');
+		fwrite($handle, 'data');
+		$stream = new Stream($handle);
+		fclose($handle);
+		$this->assertTrue($stream->isReadable());
+		
+		try {
+			$this->expectException(RuntimeException::class);
+			$stream->read(10);
+		}
+		catch(RuntimeException $e) {
+			throw $e;
+		}
+		finally {
+			$stream->close();
+		}
+	}
+	
+	public function testWriteOnDetachedStreamThrowsException()
+	{
+		$handle = fopen('php://temp', 'w+');
+		$stream = new Stream($handle);
+		$this->assertTrue($stream->isReadable());
+		$this->assertSame($handle, $stream->detach());
+		$this->assertNull($stream->detach());
+		$this->assertFalse($stream->isWritable());
+		
+		try {
+			$this->expectException(RuntimeException::class);
+			$stream->write('data');
+		}
+		catch(RuntimeException $e) {
+			throw $e;
+		}
+		finally {
+			$stream->close();
+		}
+	}
+	
+	public function testWriteErrorThrowsException()
+	{
+		$handle = fopen('php://temp', 'w+');
+		fwrite($handle, 'data');
+		$stream = new Stream($handle);
+		fclose($handle);
+		$this->assertTrue($stream->isReadable());
+		
+		try {
+			$this->expectException(RuntimeException::class);
+			$stream->write('data');
+		}
+		catch(RuntimeException $e) {
+			throw $e;
+		}
+		finally {
+			$stream->close();
+		}
+	}
+	
+	public function testSeekOnDetachedStreamThrowsException()
+	{
+		$handle = fopen('php://temp', 'w+');
+		$stream = new Stream($handle);
+		$this->assertTrue($stream->isReadable());
+		$this->assertSame($handle, $stream->detach());
+		$this->assertNull($stream->detach());
+		$this->assertFalse($stream->isSeekable());
+		
+		try {
+			$this->expectException(RuntimeException::class);
+			$stream->seek(42);
+		}
+		catch(RuntimeException $e) {
+			throw $e;
+		}
+		finally {
+			$stream->close();
+		}
+	}
+	
+	public function testTellOnDetachedStreamThrowsException()
+	{
+		$handle = fopen('php://temp', 'w+');
+		$stream = new Stream($handle);
+		$this->assertTrue($stream->isReadable());
+		$this->assertSame($handle, $stream->detach());
+		$this->assertNull($stream->detach());
+		$this->assertFalse($stream->isSeekable());
+		
+		try {
+			$this->expectException(RuntimeException::class);
+			$stream->tell();
+		}
+		catch(RuntimeException $e) {
+			throw $e;
+		}
+		finally {
+			$stream->close();
+		}
+	}
+	
+	public function testGetContentsOnDetachedStreamThrowsException()
+	{
+		$handle = fopen('php://temp', 'w+');
+		$stream = new Stream($handle);
+		$this->assertTrue($stream->isReadable());
+		$this->assertSame($handle, $stream->detach());
+		$this->assertNull($stream->detach());
+		$this->assertFalse($stream->isSeekable());
+		
+		try {
+			$this->expectException(RuntimeException::class);
+			$stream->getContents();
+		}
+		catch(RuntimeException $e) {
+			throw $e;
+		}
+		finally {
+			$stream->close();
+		}
 	}
 }

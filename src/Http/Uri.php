@@ -205,9 +205,8 @@ class Uri implements \Psr\Http\Message\UriInterface
 							if (isset($arg[0]) && isset($arg[1])) {
 								return $arg[0].'='.urlencode(urldecode($arg[1]));
 							}
-							elseif (isset($arg[0])) return $arg[0];
 							
-							return "";
+							return $arg[0];
 						},
 						explode('&', $this->components['query'])
 					),

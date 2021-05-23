@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Kraber\Http\Message;
 
 use \Psr\Http\Message\{
@@ -11,6 +13,7 @@ use InvalidArgumentException;
 abstract class AbstractMessage implements MessageInterface
 {
 	protected array $headers = [];
+	protected array $headerNames = [];
 	protected StreamInterface $body;
 	protected string $version = "1.1";
 	
@@ -22,6 +25,8 @@ abstract class AbstractMessage implements MessageInterface
 		$this->headers = $headers;
 		$this->body = !empty($body) ? $body : new Stream(fopen("php://memory", "r+"));
 		$this->version = $version;
+		
+		$this->updateHeaderNames();
 	}
 	
 	/**
@@ -88,10 +93,10 @@ abstract class AbstractMessage implements MessageInterface
 		return trim(mb_strtolower($name, 'utf-8'));
 	}
 	
-	protected function getNormalizedHeaders() : array {
-		return array_combine(
+	protected function updateHeaderNames() : void {
+		$this->headerNames = array_combine(
 			array_map(fn ($key) => $this->normalizedHeaderName($key), array_keys($this->headers)),
-			array_values($this->headers)
+			array_keys($this->headers)
 		);
 	}
 	
@@ -104,7 +109,7 @@ abstract class AbstractMessage implements MessageInterface
 	 *     no matching header name is found in the message.
 	 */
 	public function hasHeader($name) : bool {
-		return isset($this->getNormalizedHeaders()[$this->normalizedHeaderName($name)]);
+		return isset($this->headerNames[$this->normalizedHeaderName($name)]);
 	}
 	
 	/**
@@ -122,10 +127,9 @@ abstract class AbstractMessage implements MessageInterface
 	 *    return an empty array.
 	 */
 	public function getHeader($name) : array {
-		$name = $this->normalizedHeaderName($name);
-		$headers = $this->getNormalizedHeaders();
-		
-		return isset($headers[$name]) ? $headers[$name] : [];
+		return $this->hasHeader($name) ?
+			$this->headers[$this->headerNames[$this->normalizedHeaderName($name)]] :
+			[];
 	}
 	
 	/**
@@ -148,10 +152,9 @@ abstract class AbstractMessage implements MessageInterface
 	 *    the message, this method MUST return an empty string.
 	 */
 	public function getHeaderLine($name) : string {
-		$name = $this->normalizedHeaderName($name);
-		$headers = $this->getNormalizedHeaders();
-		
-		return isset($headers[$name]) ? implode(",", $headers[$name]) : "";
+		return $this->hasHeader($name) ?
+			implode(",", $this->headers[$this->headerNames[$this->normalizedHeaderName($name)]]) :
+			"";
 	}
 	
 	/**
@@ -170,14 +173,12 @@ abstract class AbstractMessage implements MessageInterface
 	 * @throws \InvalidArgumentException for invalid header names or values.
 	 */
 	public function withHeader($name, $value) : static {
-		$normalizedName = $this->normalizedHeaderName($name);
-		if (!$this->hasHeader($normalizedName)) {
+		if (!$this->hasHeader($name)) {
 			throw new InvalidArgumentException("Provided header name doesn't exists. Use withAddedHeader method to append specified header instead.");
 		}
 		
-		$headerNameMap = array_combine(array_keys($this->getNormalizedHeaders()), array_keys($this->getNormalizedHeaders()));
 		$newMessage = clone $this;
-		$newMessage->headers[$headerNameMap[$normalizedName]] = is_array($value) ? $value : [$value];
+		$newMessage->headers[$this->headerNames[$this->normalizedHeaderName($name)]] = is_array($value) ? $value : [$value];
 		
 		return $newMessage;
 	}
@@ -200,15 +201,18 @@ abstract class AbstractMessage implements MessageInterface
 	 */
 	public function withAddedHeader($name, $value) : static {
 		$normalizedName = $this->normalizedHeaderName($name);
-		$headerNameMap = array_combine(array_keys($this->getNormalizedHeaders()), array_keys($this->headers));
-		
+
 		$newMessage = clone $this;
-		if (isset($headerNameMap[$normalizedName]) && isset($newMessage->headers[$headerNameMap[$normalizedName]])) {
-			$existingValues = $newMessage->headers[$headerNameMap[$normalizedName]];
-			$newMessage->headers[$headerNameMap[$normalizedName]] = array_merge($existingValues, is_array($value) ? $value : [$value]);
+		if ($newMessage->hasHeader($name)) {
+			$existingValues = $newMessage->headers[$newMessage->headerNames[$normalizedName]];
+			$newMessage->headers[$newMessage->headerNames[$normalizedName]] = array_merge(
+				$existingValues,
+				is_array($value) ? $value : [$value]
+			);
 		}
 		else {
 			$newMessage->headers[$name] = is_array($value) ? $value : [$value];
+			$newMessage->updateHeaderNames();
 		}
 		
 		return $newMessage;
@@ -227,12 +231,10 @@ abstract class AbstractMessage implements MessageInterface
 	 * @return static
 	 */
 	public function withoutHeader($name) : static {
-		$normalizedName = $this->normalizedHeaderName($name);
-		$headerNameMap = array_combine(array_keys($this->getNormalizedHeaders()), array_keys($this->headers));
-		
 		$newMessage = clone $this;
-		if (isset($headerNameMap[$normalizedName]) && isset($newMessage->headers[$headerNameMap[$normalizedName]])) {
-			unset($newMessage->headers[$headerNameMap[$normalizedName]]);
+		if ($newMessage->hasHeader($name)) {
+			unset($newMessage->headers[$newMessage->headerNames[$this->normalizedHeaderName($name)]]);
+			$newMessage->updateHeaderNames();
 		}
 		
 		return $newMessage;

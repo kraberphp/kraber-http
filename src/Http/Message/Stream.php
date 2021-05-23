@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Kraber\Http\Message;
 
 use Throwable;
@@ -280,11 +282,11 @@ class Stream implements \Psr\Http\Message\StreamInterface
 	 *
 	 * @link http://php.net/manual/en/function.stream-get-meta-data.php
 	 * @param string $key Specific metadata to retrieve.
-	 * @return array|mixed|null Returns an associative array if no key is
+	 * @return array|string|bool|null Returns an associative array if no key is
 	 *     provided. Returns a specific key value if a key is provided and the
 	 *     value is found, or null if the key is not found.
 	 */
-	public function getMetadata($key = null) : array|string|null {
+	public function getMetadata($key = null) : array|string|bool|null {
 		return ($this->stream && $key === null) ?
 			$this->meta :
 			(isset($this->meta[$key]) ? $this->meta[$key] : null);

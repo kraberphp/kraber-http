@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Kraber\Http\Message;
 
 class Uri implements \Psr\Http\Message\UriInterface

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Kraber\Http\Message;
 
 use Psr\Http\Message\{
@@ -7,6 +9,7 @@ use Psr\Http\Message\{
 	StreamInterface,
 	RequestInterface
 };
+use InvalidArgumentException;
 
 /**
  * Representation of an outgoing, client-side request.
@@ -31,6 +34,10 @@ class Request extends AbstractMessage implements RequestInterface
 {
 	protected UriInterface $uri;
 	protected string $method = "GET";
+	protected string $requestTarget = "";
+	private static $httpMethods = [
+		'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE'
+	];
 	
 	public function __construct(
 		string|null|UriInterface $uri = null,
@@ -42,11 +49,19 @@ class Request extends AbstractMessage implements RequestInterface
 		parent::__construct($headers, $body, $version);
 		
 		if (is_string($uri) || is_null($uri)) {
-			$uri = new Uri(is_null($uri) ? "/" : $uri);
+			$uri = new Uri(is_null($uri) ? '/' : $uri);
 		}
 		
 		$this->uri = $uri;
+		
+		$method = strtoupper($method);
+		if (!in_array($method, self::$httpMethods)) {
+			throw new InvalidArgumentException("Invalid HTTP method provided. Allowed methods : ".implode(',', self::$httpMethods));
+		}
+		
 		$this->method = $method;
+		
+		$this->updateHostHeaderFromUri();
 	}
 	
 	/**
@@ -66,8 +81,20 @@ class Request extends AbstractMessage implements RequestInterface
 	 * @return string
 	 */
 	public function getRequestTarget() : string {
-		$uri = !empty($this->uri) ? (string) $this->uri : '/';
-		return !empty($uri) ? $uri : '/';
+		if (!empty($this->requestTarget)) {
+			return $this->requestTarget;
+		}
+		
+		$target = '/';
+		if ($this->uri->getPath()) {
+			$target = $this->uri->getPath();
+		}
+		
+		if ($this->uri->getQuery()) {
+			$target .= '?'.$this->uri->getQuery();
+		}
+		
+		return $target;
 	}
 	
 	/**
@@ -87,8 +114,11 @@ class Request extends AbstractMessage implements RequestInterface
 	 * @param mixed $requestTarget
 	 * @return static
 	 */
-	public function withRequestTarget($requestTarget) {
-	
+	public function withRequestTarget($requestTarget) : static {
+		$newRequest = clone $this;
+		$newRequest->requestTarget = trim($requestTarget);
+		
+		return $newRequest;
 	}
 	
 	/**
@@ -96,7 +126,7 @@ class Request extends AbstractMessage implements RequestInterface
 	 *
 	 * @return string Returns the request method.
 	 */
-	public function getMethod() {
+	public function getMethod() : string {
 		return $this->method;
 	}
 	
@@ -115,8 +145,15 @@ class Request extends AbstractMessage implements RequestInterface
 	 * @return static
 	 * @throws \InvalidArgumentException for invalid HTTP methods.
 	 */
-	public function withMethod($method) {
-	
+	public function withMethod($method) : static {
+		if (!in_array(strtoupper($method), self::$httpMethods)) {
+			throw new InvalidArgumentException("Invalid HTTP method provided. Allowed methods : ".implode(',', self::$httpMethods));
+		}
+		
+		$newRequest = clone $this;
+		$newRequest->method = $method;
+		
+		return $newRequest;
 	}
 	
 	/**
@@ -129,7 +166,7 @@ class Request extends AbstractMessage implements RequestInterface
 	 *     representing the URI of the request.
 	 */
 	public function getUri() : UriInterface {
-		return !empty($this->uri) ? $this->uri : new Uri($this->getRequestTarget());
+		return $this->uri;
 	}
 	
 	/**
@@ -162,7 +199,35 @@ class Request extends AbstractMessage implements RequestInterface
 	 * @param bool $preserveHost Preserve the original state of the Host header.
 	 * @return static
 	 */
-	public function withUri(UriInterface $uri, $preserveHost = false) {
+	public function withUri(UriInterface $uri, $preserveHost = false) : static {
+		$newRequest = clone $this;
+		$newRequest->uri = $uri;
+		if ($preserveHost === false ||
+			($preserveHost === true &&
+				(!$newRequest->hasHeader('host') || empty($newRequest->getHeaderLine('host'))))) {
+			$newRequest->updateHostHeaderFromUri();
+		}
+		
+		return $newRequest;
+	}
 	
+	private function updateHostHeaderFromUri() : void
+	{
+		if (empty($this->uri->getHost())) {
+			return;
+		}
+		
+		$host = $this->uri->getHost();
+		if ($this->uri->getPort()) {
+			$host .= ':'.$this->uri->getPort();
+		}
+		
+		if (isset($this->headerNames['host'])) {
+			$headerName = $this->headerNames['host'];
+		} else {
+			$this->headerNames['host'] = $headerName = 'Host';
+		}
+		
+		$this->headers = [$headerName => [$host]] + $this->headers;
 	}
 }

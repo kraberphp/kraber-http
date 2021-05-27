@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Kraber\Http\Message;
 
+use InvalidArgumentException;
+
 class Uri implements \Psr\Http\Message\UriInterface
 {
 	private array $components = [];
@@ -55,7 +57,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 		$host = $this->getHost();
 		$port = $this->getPort();
 		if (!empty($userInfo)) $authority = $userInfo."@";
-		if (!empty($host)) $authority .= $host;
+		if (!empty($host) || $host === "0") $authority .= $host;
 		if (!empty($port)) $authority .= ":".$port;
 		
 		return $authority;
@@ -160,10 +162,10 @@ class Uri implements \Psr\Http\Message\UriInterface
 			$path = implode('/',
 				array_filter(
 					array_map(
-						fn($partial) => urlencode(urldecode($partial)),
+						fn($partial) => rawurlencode(rawurldecode($partial)),
 						explode('/', trim($this->components['path'], '/'))
 					),
-					fn($partial) => !empty($partial)
+					fn($partial) => !empty($partial) || $partial === "0"
 				)
 			);
 			
@@ -199,18 +201,18 @@ class Uri implements \Psr\Http\Message\UriInterface
 				array_filter(
 					array_map(
 						function($pair) {
-							if (empty($pair)) return "";
+							if (empty($pair) && $pair !== "0") return "";
 							
 							$arg = explode('=', $pair, 2);
 							if (isset($arg[0]) && isset($arg[1])) {
-								return $arg[0].'='.urlencode(urldecode($arg[1]));
+								return $arg[0].'='.rawurlencode(rawurldecode($arg[1]));
 							}
 							
 							return $arg[0];
 						},
 						explode('&', $this->components['query'])
 					),
-					fn($pair) => !empty($pair)
+					fn($pair) => !empty($pair) || $pair === "0"
 				)
 			);
 		}
@@ -236,7 +238,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 */
 	public function getFragment() : string {
 		if (isset($this->components['fragment'])) {
-			return urlencode(urldecode($this->components['fragment']));
+			return rawurlencode(rawurldecode($this->components['fragment']));
 		}
 		
 		return "";
@@ -255,15 +257,15 @@ class Uri implements \Psr\Http\Message\UriInterface
 		
 		if (!empty($scheme)) $uri = $scheme.":";
 		
-		if (!empty($userInfo) || !empty($host)) $uri .= "//";
+		if (!empty($userInfo) || (!empty($host) || $host === "0")) $uri .= "//";
 		if (!empty($userInfo)) $uri .= $userInfo.'@';
-		if (!empty($host)) $uri .= $host;
+		if (!empty($host) || $host === "0") $uri .= $host;
 		
 		if (!empty($port)) $uri .= ':'.$port;
 		
-		if (!empty($path)) $uri .= $path;
-		if (!empty($query)) $uri .= '?'.$query;
-		if (!empty($fragment)) $uri .= '#'.$fragment;
+		if (!empty($path) || $path === "0") $uri .= $path;
+		if (!empty($query) || $query === "0") $uri .= '?'.$query;
+		if (!empty($fragment) || $fragment === "0") $uri .= '#'.$fragment;
 		
 		return $uri;
 	}
@@ -283,6 +285,10 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return static A new instance with the specified scheme.
 	 */
 	public function withScheme($scheme) : static {
+		if (!is_string($scheme) && !empty($scheme)) {
+			throw new InvalidArgumentException("Invalid scheme provided.");
+		}
+		
 		$newUri = $this->getFormattedUriFromArgs(
 			$scheme,
 			$this->getUserInfo(),
@@ -312,9 +318,9 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 */
 	public function withUserInfo($user, $password = null) : static {
 		$userInfo = "";
-		if (!empty($user)) {
+		if (is_string($user) && strlen($user)) {
 			$userInfo = $user;
-			if (!empty($password)) $userInfo .= ':'.$password;
+			if (is_string($password) && strlen($password)) $userInfo .= ':'.$password;
 		}
 		
 		$newUri = $this->getFormattedUriFromArgs(
@@ -342,6 +348,10 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return static A new instance with the specified host.
 	 */
 	public function withHost($host) : static {
+		if (!is_string($host) && !empty($host)) {
+			throw new InvalidArgumentException("Invalid host provided.");
+		}
+		
 		$newUri = $this->getFormattedUriFromArgs(
 			$this->getScheme(),
 			$this->getUserInfo(),
@@ -374,7 +384,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 */
 	public function withPort($port) : static {
 		if (!empty($port) && $port < 0 && $port < 65353) {
-			throw new \InvalidArgumentException("Invalid port provided. Allowed port range: 0 - 65353.");
+			throw new InvalidArgumentException("Invalid port provided. Allowed port range: 0 - 65353.");
 		}
 		
 		$newUri = $this->getFormattedUriFromArgs(
@@ -412,6 +422,10 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return static A new instance with the specified path.
 	 */
 	public function withPath($path) : static {
+		if (!is_string($path) && !empty($path)) {
+			throw new InvalidArgumentException("Invalid path provided.");
+		}
+		
 		$newUri = $this->getFormattedUriFromArgs(
 			$this->getScheme(),
 			$this->getUserInfo(),
@@ -440,6 +454,10 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return static A new instance with the specified query string.
 	 */
 	public function withQuery($query) : static {
+		if (!is_string($query) && !empty($query)) {
+			throw new InvalidArgumentException("Invalid query provided.");
+		}
+		
 		$newUri = $this->getFormattedUriFromArgs(
 			$this->getScheme(),
 			$this->getUserInfo(),
@@ -468,6 +486,10 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return static A new instance with the specified fragment.
 	 */
 	public function withFragment($fragment) : static {
+		if (!is_string($fragment) && !empty($fragment)) {
+			throw new InvalidArgumentException("Invalid fragment provided.");
+		}
+		
 		$newUri = $this->getFormattedUriFromArgs(
 			$this->getScheme(),
 			$this->getUserInfo(),

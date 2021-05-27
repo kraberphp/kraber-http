@@ -146,7 +146,7 @@ class Request extends AbstractMessage implements RequestInterface
 	 * @throws \InvalidArgumentException for invalid HTTP methods.
 	 */
 	public function withMethod($method) : static {
-		if (!in_array(strtoupper($method), self::$httpMethods)) {
+		if (!is_string($method) || !in_array(strtoupper($method), self::$httpMethods)) {
 			throw new InvalidArgumentException("Invalid HTTP method provided. Allowed methods : ".implode(',', self::$httpMethods));
 		}
 		

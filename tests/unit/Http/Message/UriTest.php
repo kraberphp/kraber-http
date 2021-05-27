@@ -238,11 +238,11 @@ class UriTest extends TestCase {
 			],
 			'url and absolute path not encoded' => [
 				"https://www.example.tld/privacy and settings",
-				"/privacy+and+settings"
+				"/privacy%20and%20settings"
 			],
 			'url and absolute path encoded' => [
-				"https://www.example.tld/privacy+and+settings",
-				"/privacy+and+settings"
+				"https://www.example.tld/privacy%20and%20settings",
+				"/privacy%20and%20settings"
 			],
 			'url and absolute path and slash encoded inside' => [
 				"https://www.example.tld/privacy%2Fand%2Fsettings/account",
@@ -277,11 +277,11 @@ class UriTest extends TestCase {
 			],
 			'query string 1 arg not encoded' => [
 				"https://www.example.tld?foo=bar alice",
-				"foo=bar+alice"
+				"foo=bar%20alice"
 			],
 			'query string 1 arg encoded' => [
-				"https://www.example.tld?foo=bar+alice",
-				"foo=bar+alice"
+				"https://www.example.tld?foo=bar%20alice",
+				"foo=bar%20alice"
 			],
 			
 			'query string 2 args' => [
@@ -302,11 +302,11 @@ class UriTest extends TestCase {
 			],
 			'query string 2 args not encoded' => [
 				"https://www.example.tld?foo=bar stub&alice=bob stub",
-				"foo=bar+stub&alice=bob+stub"
+				"foo=bar%20stub&alice=bob%20stub"
 			],
 			'query string 2 args encoded' => [
-				"https://www.example.tld?foo=bar+stub&alice=bob+stub",
-				"foo=bar+stub&alice=bob+stub"
+				"https://www.example.tld?foo=bar%20stub&alice=bob%20stub",
+				"foo=bar%20stub&alice=bob%20stub"
 			],
 			'query string 2 args include ampersand encoded' => [
 				"https://www.example.tld?foo=bar%26stub&alice=bob%26stub",
@@ -535,7 +535,7 @@ class UriTest extends TestCase {
 			'url append not encoded path' => [
 				"https://www.example.tld/",
 				"/my account/settings",
-				"https://www.example.tld/my+account/settings",
+				"https://www.example.tld/my%20account/settings",
 			],
 			'url append encoded path' => [
 				"https://www.example.tld/",
@@ -571,12 +571,12 @@ class UriTest extends TestCase {
 			'url append query string not encoded' => [
 				"https://www.example.tld/",
 				"foo=bar alice",
-				"https://www.example.tld/?foo=bar+alice",
+				"https://www.example.tld/?foo=bar%20alice",
 			],
 			'url append query string encoded' => [
 				"https://www.example.tld/",
-				"foo=bar+alice",
-				"https://www.example.tld/?foo=bar+alice",
+				"foo=bar%20alice",
+				"https://www.example.tld/?foo=bar%20alice",
 			],
 		];
 	}
@@ -654,19 +654,19 @@ class UriTest extends TestCase {
 			],
 			'decoded path' => [
 				"https://www.example.tld/my account",
-				"https://www.example.tld/my+account",
+				"https://www.example.tld/my%20account",
 			],
 			'encoded path' => [
-				"https://www.example.tld/my+account",
-				"https://www.example.tld/my+account",
+				"https://www.example.tld/my%20account",
+				"https://www.example.tld/my%20account",
 			],
 			'decoded query string' => [
 				"https://www.example.tld/?foo=hello world",
-				"https://www.example.tld/?foo=hello+world",
+				"https://www.example.tld/?foo=hello%20world",
 			],
 			'encoded query string' => [
-				"https://www.example.tld/?foo=hello+world",
-				"https://www.example.tld/?foo=hello+world",
+				"https://www.example.tld/?foo=hello%20world",
+				"https://www.example.tld/?foo=hello%20world",
 			],
 		];
 	}

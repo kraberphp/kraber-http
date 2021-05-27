@@ -109,7 +109,9 @@ abstract class AbstractMessage implements MessageInterface
 	 *     no matching header name is found in the message.
 	 */
 	public function hasHeader($name) : bool {
-		return isset($this->headerNames[$this->normalizedHeaderName($name)]);
+		return is_string($name) ?
+			isset($this->headerNames[$this->normalizedHeaderName($name)]) :
+			false;
 	}
 	
 	/**
@@ -173,12 +175,19 @@ abstract class AbstractMessage implements MessageInterface
 	 * @throws \InvalidArgumentException for invalid header names or values.
 	 */
 	public function withHeader($name, $value) : static {
-		if (!$this->hasHeader($name)) {
-			throw new InvalidArgumentException("Provided header name doesn't exists. Use withAddedHeader method to append specified header instead.");
+		if (!is_string($name) || empty($name)) {
+			throw new InvalidArgumentException("Invalid header name provided, must be a string.");
+		}
+		
+		if (!is_string($value) && !(is_array($value) && !empty($value))) {
+			throw new InvalidArgumentException("Invalid header value(s) provided must be a string or an array of string.");
 		}
 		
 		$newMessage = clone $this;
-		$newMessage->headers[$this->headerNames[$this->normalizedHeaderName($name)]] = is_array($value) ? $value : [$value];
+		if (!$newMessage->hasHeader($name)) {
+			$newMessage->headerNames[$newMessage->normalizedHeaderName($name)] = $name;
+		}
+		$newMessage->headers[$newMessage->headerNames[$newMessage->normalizedHeaderName($name)]] = is_array($value) ? array_values($value) : [$value];
 		
 		return $newMessage;
 	}
@@ -200,6 +209,14 @@ abstract class AbstractMessage implements MessageInterface
 	 * @throws \InvalidArgumentException for invalid header names or values.
 	 */
 	public function withAddedHeader($name, $value) : static {
+		if (!is_string($name) || empty($name)) {
+			throw new InvalidArgumentException("Invalid header name provided, must be a string.");
+		}
+		
+		if (!is_string($value) && !(is_array($value) && !empty($value))) {
+			throw new InvalidArgumentException("Invalid header value(s) provided must be a string or an array of string.");
+		}
+		
 		$normalizedName = $this->normalizedHeaderName($name);
 
 		$newMessage = clone $this;
@@ -207,11 +224,11 @@ abstract class AbstractMessage implements MessageInterface
 			$existingValues = $newMessage->headers[$newMessage->headerNames[$normalizedName]];
 			$newMessage->headers[$newMessage->headerNames[$normalizedName]] = array_merge(
 				$existingValues,
-				is_array($value) ? $value : [$value]
+				is_array($value) ? array_values($value) : [$value]
 			);
 		}
 		else {
-			$newMessage->headers[$name] = is_array($value) ? $value : [$value];
+			$newMessage->headers[$name] = is_array($value) ? array_values($value) : [$value];
 			$newMessage->updateHeaderNames();
 		}
 		

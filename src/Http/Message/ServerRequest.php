@@ -55,7 +55,7 @@ class ServerRequest extends Request implements ServerRequestInterface
 	protected array $cookieParams = [];
 	protected array $queryParams = [];
 	protected array $uploadedFiles = [];
-	protected null|array|object $parsedBody = [];
+	protected null|array|object $parsedBody = null;
 	protected array $attributes = [];
 	
 	public function __construct(

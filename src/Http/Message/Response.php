@@ -160,7 +160,7 @@ class Response extends AbstractMessage implements ResponseInterface
 	 * @throws \InvalidArgumentException For invalid status code arguments.
 	 */
 	public function withStatus($code, $reasonPhrase = '') : static {
-		if (!isset(self::$httpStatusCodes[$code])) {
+		if (!is_int($code) || !isset(self::$httpStatusCodes[$code])) {
 			throw new InvalidArgumentException("Invalid HTTP status code.");
 		}
 		

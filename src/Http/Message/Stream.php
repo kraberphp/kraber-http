@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace Kraber\Http\Message;
 
+use \Psr\Http\Message\StreamInterface;
 use Throwable;
 use InvalidArgumentException;
 use RuntimeException;
 
-class Stream implements \Psr\Http\Message\StreamInterface
+class Stream implements StreamInterface
 {
 	private $stream;
 	private array $meta = [];
 	private bool $isSeekable = false;
 	private bool $isReadable = false;
 	private bool $isWritable = false;
-	private static array $readWriteModes = [
+	private const READ_WRITE_MODES = [
 		'read' => [
 			'r' => true, 'w+' => true, 'r+' => true, 'x+' => true, 'c+' => true,
 			'rb' => true, 'w+b' => true, 'r+b' => true, 'x+b' => true,
@@ -32,6 +33,7 @@ class Stream implements \Psr\Http\Message\StreamInterface
 	
 	/**
 	 * Stream constructor.
+	 *
 	 * @param resource|string $stream
 	 * @param string $mode
 	 * @throws InvalidArgumentException
@@ -51,10 +53,13 @@ class Stream implements \Psr\Http\Message\StreamInterface
 		
 		$this->meta = stream_get_meta_data($this->stream);
 		$this->isSeekable = $this->getMetadata('seekable') ? true : false;
-		$this->isReadable = isset(self::$readWriteModes['read'][$this->getMetadata('mode')]);
-		$this->isWritable = isset(self::$readWriteModes['write'][$this->getMetadata('mode')]);
+		$this->isReadable = isset(self::READ_WRITE_MODES['read'][$this->getMetadata('mode')]);
+		$this->isWritable = isset(self::READ_WRITE_MODES['write'][$this->getMetadata('mode')]);
 	}
 	
+	/**
+	 * Stream destructor.
+	 */
 	public function __destruct() {
 		$this->close();
 	}
@@ -138,7 +143,7 @@ class Stream implements \Psr\Http\Message\StreamInterface
 	 * Returns the current position of the file read/write pointer
 	 *
 	 * @return int Position of the file pointer
-	 * @throws \RuntimeException on error.
+	 * @throws RuntimeException on error.
 	 */
 	public function tell() : int {
 		try {
@@ -179,7 +184,7 @@ class Stream implements \Psr\Http\Message\StreamInterface
 	 *     PHP $whence values for `fseek()`.  SEEK_SET: Set position equal to
 	 *     offset bytes SEEK_CUR: Set position to current location plus offset
 	 *     SEEK_END: Set position to end-of-stream plus offset.
-	 * @throws \RuntimeException on failure.
+	 * @throws RuntimeException on failure.
 	 */
 	public function seek($offset, $whence = SEEK_SET) : void {
 		try {
@@ -198,7 +203,7 @@ class Stream implements \Psr\Http\Message\StreamInterface
 	 *
 	 * @see seek()
 	 * @link http://www.php.net/manual/en/function.fseek.php
-	 * @throws \RuntimeException on failure.
+	 * @throws RuntimeException on failure.
 	 */
 	public function rewind() : void {
 		$this->seek(0);
@@ -248,7 +253,7 @@ class Stream implements \Psr\Http\Message\StreamInterface
 	 *     call returns fewer bytes.
 	 * @return string Returns the data read from the stream, or an empty string
 	 *     if no bytes are available.
-	 * @throws \RuntimeException if an error occurs.
+	 * @throws RuntimeException if an error occurs.
 	 */
 	public function read($length) : string {
 		try {
@@ -265,7 +270,7 @@ class Stream implements \Psr\Http\Message\StreamInterface
 	 * Returns the remaining contents in a string
 	 *
 	 * @return string
-	 * @throws \RuntimeException if unable to read or an error occurs while
+	 * @throws RuntimeException if unable to read or an error occurs while
 	 *     reading.
 	 */
 	public function getContents() : string {

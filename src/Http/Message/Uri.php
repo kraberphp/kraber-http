@@ -4,22 +4,23 @@ declare(strict_types=1);
 
 namespace Kraber\Http\Message;
 
+use \Psr\Http\Message\UriInterface;
 use InvalidArgumentException;
 
-class Uri implements \Psr\Http\Message\UriInterface
+class Uri implements UriInterface
 {
-	/**
-	 * Parsed URL components
-	 * @var array $components
-	 */
+	/** @var array URI components.*/
 	private array $components = [];
 	
-	/**
-	 * @see https://datatracker.ietf.org/doc/html/rfc3986#section-2.2
-	 */
+	/** @see https://datatracker.ietf.org/doc/html/rfc3986#section-2.2 */
 	private const UNRESERVED_CHARACTERS = 'a-zA-Z0-9_-.~';
 	private const RESERVED_CHARACTERS = ":/?#[]@!$&'()*+,;=";
 	
+	/**
+	 * Uri constructor.
+	 *
+	 * @param string $uri The URI.
+	 */
 	public function __construct(string $uri = "") {
 		$components = parse_url($uri);
 		

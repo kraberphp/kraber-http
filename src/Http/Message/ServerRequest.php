@@ -63,10 +63,11 @@ class ServerRequest extends Request implements ServerRequestInterface
 		string $method = "GET",
 		array $headers = [],
 		?StreamInterface $body = null,
-		string $version = "1.1"
+		string $version = "1.1",
+		?array $serverParams = null
 	) {
 		parent::__construct($uri, $method, $headers, $body, $version);
-		$this->serverParams = $_SERVER ?? [];
+		$this->serverParams = $serverParams ?? $_SERVER;
 	}
 	
 	/**

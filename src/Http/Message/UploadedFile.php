@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Kraber\Http\Message;
 
-use Psr\Http\Message\{UploadedFileInterface, StreamInterface};
+use Psr\Http\Message\{
+	UploadedFileInterface,
+	StreamInterface
+};
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -18,6 +21,7 @@ use RuntimeException;
  */
 class UploadedFile implements UploadedFileInterface
 {
+	private ?StreamInterface $stream = null;
 	private ?string $file = null;
 	private ?string $clientFilename = null;
 	private ?string $clientMediaType = null;
@@ -35,8 +39,10 @@ class UploadedFile implements UploadedFileInterface
 		UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload.',
 	];
 	
-	public function __construct(?string $file = null, ?string $clientFilename = null, ?string $clientMediaType = null, ?int $size = null, int $error = UPLOAD_ERR_NO_FILE) {
-		$this->file = $file;
+	public function __construct(null|string|StreamInterface $file = null, ?string $clientFilename = null, ?string $clientMediaType = null, ?int $size = null, int $error = UPLOAD_ERR_NO_FILE) {
+		if (is_string($file)) $this->file = $file;
+		elseif (is_subclass_of($file, StreamInterface::class)) $this->stream = $file;
+		
 		$this->clientFilename = $clientFilename;
 		$this->clientMediaType = $clientMediaType;
 		$this->size = $size;
@@ -71,6 +77,10 @@ class UploadedFile implements UploadedFileInterface
 	 */
 	public function getStream() : StreamInterface {
 		$this->ensureUploadedFileIsValid();
+		
+		if ($this->stream !== null) {
+			return $this->stream;
+		}
 		
 		try {
 			$stream = new Stream($this->file, "r");

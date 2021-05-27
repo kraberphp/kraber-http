@@ -8,7 +8,7 @@ use Kraber\Http\Message\Request;
 class RequestTest extends RequestIntegrationTest
 {
 	protected $skippedTests = [
-		'testMethodIsExtendable' => "It's not extendable, only standards HTTP methods are supported."
+		'testMethodIsExtendable' => "Only standards HTTP methods are supported otherwise an exception is thrown."
 	];
 
 	public function createSubject()

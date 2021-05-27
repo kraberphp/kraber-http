@@ -670,4 +670,87 @@ class UriTest extends TestCase {
 			],
 		];
 	}
+	
+	public function testUriWithDoubleSlashAndHostRemovedKeepOnlyOneSlash() {
+		$uri = new Uri("//example.com:8080//test");
+		$uri = $uri->withHost("");
+		
+		$this->assertEquals("/test", (string) $uri);
+	}
+	
+	public function testPathIsPrependedWithSlashIfHostComponentIsRemoved() {
+		$uri = (new Uri())
+			->withHost("example.tld")
+			->withPath("account");
+		
+		$this->assertEquals("//example.tld/account", (string) $uri);
+		
+		$uri = $uri->withHost("");
+		$this->assertEquals("/account", (string) $uri);
+	}
+	
+	public function testWithHostThrowsExceptionOnInvalidArgument() {
+		$uri = new Uri("https://example.com:8080/account/");
+		$this->expectException(InvalidArgumentException::class);
+		$uri->withHost(42);
+	}
+	
+	public function testWithHostEmptyArgumentRemoveHost() {
+		$uri = new Uri("//example.com:8080/test");
+		$uri = $uri->withHost("");
+		
+		$this->assertEquals("/test", (string) $uri);
+	}
+	
+	public function testWithPortThrowsExceptionOnInvalidArgument() {
+		$uri = new Uri("https://example.com:8080/account/");
+		$this->expectException(InvalidArgumentException::class);
+		$uri->withPort("42");
+	}
+	
+	public function testWithPortEmptyArgumentRemovePort() {
+		$uri = new Uri("https://example.com:8080/");
+		$uri = $uri->withPort();
+		
+		$this->assertEquals("https://example.com/", (string) $uri);
+	}
+	
+	public function testWithPathThrowsExceptionOnInvalidArgument() {
+		$uri = new Uri("https://example.com/account/");
+		$this->expectException(InvalidArgumentException::class);
+		$uri->withPath(42);
+	}
+	
+	public function testWithPathEmptyArgumentRemovePath() {
+		$uri = new Uri("https://example.com/account/");
+		$uri = $uri->withPath("");
+		
+		$this->assertEquals("https://example.com", (string) $uri);
+	}
+	
+	public function testWithQueryThrowsExceptionOnInvalidArgument() {
+		$uri = new Uri("https://example.com/");
+		$this->expectException(InvalidArgumentException::class);
+		$uri->withQuery(42);
+	}
+	
+	public function testWithQueryEmptyArgumentRemoveQuery() {
+		$uri = new Uri("https://example.com/?bar=foo");
+		$uri = $uri->withQuery("");
+		
+		$this->assertEquals("https://example.com/", (string) $uri);
+	}
+	
+	public function testWithFragmentThrowsExceptionOnInvalidArgument() {
+		$uri = new Uri("https://example.com/");
+		$this->expectException(InvalidArgumentException::class);
+		$uri->withFragment(42);
+	}
+	
+	public function testWithFragmentEmptyArgumentRemoveFragment() {
+		$uri = new Uri("https://example.com/#section");
+		$uri = $uri->withFragment("");
+		
+		$this->assertEquals("https://example.com/", (string) $uri);
+	}
 }

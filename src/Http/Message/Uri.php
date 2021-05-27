@@ -265,11 +265,14 @@ class Uri implements \Psr\Http\Message\UriInterface
 		string $fragment
 	) {
 		$uri = "";
-		if ($scheme !== "") $uri = $scheme.":";
-		if ($userInfo !== "" || $host !== "") $uri .= "//";
-		if ($userInfo !== "") $uri .= $userInfo.'@';
-		if ($host !== "") $uri .= $host;
-		if ($port !== null) $uri .= ':'.$port;
+		if ($userInfo !== "" || $host !== "") {
+			if ($scheme !== "") $uri = $scheme.":";
+			$uri .= "//";
+			if ($userInfo !== "") $uri .= $userInfo.'@';
+			if ($host !== "") $uri .= $host;
+			if ($port !== null) $uri .= ':'.$port;
+		}
+		
 		if ($path !== "") {
 			if ($userInfo === "" && $host === "" && str_starts_with($path, "//")) {
 				$path = "/".ltrim($path, "/");
@@ -300,14 +303,15 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 *
 	 * @param string $scheme The scheme to use with the new instance.
 	 * @return static A new instance with the specified scheme.
+	 * @throws InvalidArgumentException for invalid scheme.
 	 */
-	public function withScheme($scheme) : static {
-		if (!is_string($scheme) && !empty($scheme)) {
-			throw new InvalidArgumentException("Invalid scheme provided.");
+	public function withScheme($scheme = null) : static {
+		if (!(is_string($scheme) || is_null($scheme))) {
+			throw new InvalidArgumentException("Argument provided must be a string, an empty string or null.");
 		}
 		
 		$newUri = $this->createUriFromSubComponents(
-			$scheme,
+			$scheme ?? "",
 			$this->getUserInfo(),
 			$this->getHost(),
 			$this->getPort(),
@@ -335,9 +339,9 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 */
 	public function withUserInfo($user, $password = null) : static {
 		$userInfo = "";
-		if (is_string($user) && strlen($user)) {
+		if (is_string($user) && $user !== "") {
 			$userInfo = $user;
-			if (is_string($password) && strlen($password)) $userInfo .= ':'.$password;
+			if (is_string($password) && $password !== "") $userInfo .= ':'.$password;
 		}
 		
 		$newUri = $this->createUriFromSubComponents(
@@ -363,16 +367,17 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 *
 	 * @param string $host The hostname to use with the new instance.
 	 * @return static A new instance with the specified host.
+	 * @throws InvalidArgumentException for invalid host.
 	 */
-	public function withHost($host) : static {
-		if (!is_string($host) && !empty($host)) {
-			throw new InvalidArgumentException("Invalid host provided.");
+	public function withHost($host = null) : static {
+		if (!(is_string($host) || is_null($host))) {
+			throw new InvalidArgumentException("Argument provided must be a string, an empty string or null.");
 		}
 		
 		$newUri = $this->createUriFromSubComponents(
 			$this->getScheme(),
 			$this->getUserInfo(),
-			$host,
+			$host ?? "",
 			$this->getPort(),
 			$this->getPath(),
 			$this->getQuery(),
@@ -397,9 +402,9 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @param null|int $port The port to use with the new instance; a null value
 	 *     removes the port information.
 	 * @return static A new instance with the specified port.
-	 * @throws \InvalidArgumentException for invalid ports.
+	 * @throws InvalidArgumentException for invalid ports.
 	 */
-	public function withPort($port) : static {
+	public function withPort($port = null) : static {
 		if ((!is_int($port) && !empty($port)) || ($port < 0 && $port < 65353)) {
 			throw new InvalidArgumentException("Invalid port provided. Allowed port range: 0 - 65353.");
 		}
@@ -437,10 +442,11 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 *
 	 * @param string $path The path to use with the new instance.
 	 * @return static A new instance with the specified path.
+	 * @throws InvalidArgumentException for invalid path.
 	 */
-	public function withPath($path) : static {
-		if (!is_string($path) && !empty($path)) {
-			throw new InvalidArgumentException("Invalid path provided.");
+	public function withPath($path = null) : static {
+		if (!(is_string($path) || is_null($path))) {
+			throw new InvalidArgumentException("Argument provided must be a string, an empty string or null.");
 		}
 		
 		$newUri = $this->createUriFromSubComponents(
@@ -448,7 +454,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 			$this->getUserInfo(),
 			$this->getHost(),
 			$this->getPort(),
-			$path,
+			$path ?? "",
 			$this->getQuery(),
 			$this->getFragment()
 		);
@@ -469,10 +475,11 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 *
 	 * @param string $query The query string to use with the new instance.
 	 * @return static A new instance with the specified query string.
+	 * @throws InvalidArgumentException for invalid query string.
 	 */
-	public function withQuery($query) : static {
-		if (!is_string($query) && !empty($query)) {
-			throw new InvalidArgumentException("Invalid query provided.");
+	public function withQuery($query = null) : static {
+		if (!(is_string($query) || is_null($query))) {
+			throw new InvalidArgumentException("Argument provided must be a string, an empty string or null.");
 		}
 		
 		$newUri = $this->createUriFromSubComponents(
@@ -481,7 +488,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 			$this->getHost(),
 			$this->getPort(),
 			$this->getPath(),
-			$query,
+			$query ?? "",
 			$this->getFragment()
 		);
 		
@@ -501,10 +508,11 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 *
 	 * @param string $fragment The fragment to use with the new instance.
 	 * @return static A new instance with the specified fragment.
+	 * @throws InvalidArgumentException for invalid fragment.
 	 */
-	public function withFragment($fragment) : static {
-		if (!is_string($fragment) && !empty($fragment)) {
-			throw new InvalidArgumentException("Invalid fragment provided.");
+	public function withFragment($fragment = null) : static {
+		if (!(is_string($fragment) || is_null($fragment))) {
+			throw new InvalidArgumentException("Argument provided must be a string, an empty string or null.");
 		}
 		
 		$newUri = $this->createUriFromSubComponents(
@@ -514,7 +522,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 			$this->getPort(),
 			$this->getPath(),
 			$this->getQuery(),
-			$fragment
+			$fragment ?? ""
 		);
 		
 		return new static($newUri);

@@ -193,6 +193,12 @@ class ServerRequest extends Request implements ServerRequestInterface
 	 * @throws \InvalidArgumentException if an invalid structure is provided.
 	 */
 	public function withUploadedFiles(array $uploadedFiles) : static {
+		foreach ($uploadedFiles as $uploadedFile) {
+			if (!($uploadedFile instanceof UploadedFile)) {
+				throw new InvalidArgumentException("Invalid argument provided. Argument should be an array of UploadedFile objects.");
+			}
+		}
+		
 		$newServerRequest = clone $this;
 		$newServerRequest->uploadedFiles = $uploadedFiles;
 		
@@ -328,7 +334,7 @@ class ServerRequest extends Request implements ServerRequestInterface
 	 * @return static
 	 */
 	public function withoutAttribute($name) : static {
-		if (!isset($newServerRequest->attributes[$name])) {
+		if (!isset($this->attributes[$name])) {
 			return $this;
 		}
 		

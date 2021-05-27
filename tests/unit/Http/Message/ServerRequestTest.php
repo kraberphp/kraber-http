@@ -18,7 +18,7 @@ class ServerRequestTest extends TestCase
 		$this->assertIsArray($this->getPropertyValue($serverRequest, 'cookieParams'));
 		$this->assertIsArray($this->getPropertyValue($serverRequest, 'queryParams'));
 		$this->assertIsArray($this->getPropertyValue($serverRequest, 'uploadedFiles'));
-		$this->assertIsArray($this->getPropertyValue($serverRequest, 'parsedBody'));
+		$this->assertNull($this->getPropertyValue($serverRequest, 'parsedBody'));
 		$this->assertIsArray($this->getPropertyValue($serverRequest, 'attributes'));
 	}
 	

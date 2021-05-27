@@ -163,22 +163,6 @@ class AbstractMessageTest extends TestCase
 		$this->assertEquals("3f80f-1c6-3e1cb03b,3f80f-1d6-3e1cb03b", $newMessage->getHeaderLine("etag"));
 	}
 	
-	public function testWithHeaderThrowsExceptionOnNonExistingHeaderName() {
-		$message = $this->getRawMessageImplementation([
-			'Date' => ['Mon, 23 May 2005 22:38:34 GMT'],
-			'Content-Type' => ['text/html; charset=UTF-8'],
-			'Content-Length' => ['155'],
-			'Last-Modified' => ['Wed, 08 Jan 2003 23:11:55 GMT'],
-			'Server' => ['Apache/1.3.3.7 (Unix) (Red-Hat/Linux)'],
-			'ETag' => ["3f80f-1b6-3e1cb03b"],
-			'Accept-Ranges' => ['bytes'],
-			'Connection' => ['close']
-		]);
-		
-		$this->expectException(InvalidArgumentException::class);
-		$message->withHeader("X-Custom-Header", "open");
-	}
-	
 	public function testWithAddedHeaderCanAppendString() {
 		$message = $this->getRawMessageImplementation([
 			'Date' => ['Mon, 23 May 2005 22:38:34 GMT'],

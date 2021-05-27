@@ -218,7 +218,7 @@ class Stream implements \Psr\Http\Message\StreamInterface
 	 *
 	 * @param string $string The string that is to be written.
 	 * @return int Returns the number of bytes written to the stream.
-	 * @throws \RuntimeException on failure.
+	 * @throws RuntimeException on failure.
 	 */
 	public function write($string) : int {
 		try {

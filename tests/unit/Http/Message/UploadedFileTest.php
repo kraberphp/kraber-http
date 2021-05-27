@@ -3,7 +3,10 @@
 namespace Kraber\Test\Http\Message;
 
 use Kraber\Test\TestCase;
-use Kraber\Http\Message\UploadedFile;
+use Kraber\Http\Message\{
+	UploadedFile,
+	Stream
+};
 use org\bovigo\vfs\vfsStream;
 use RuntimeException;
 use InvalidArgumentException;
@@ -63,6 +66,44 @@ class UploadedFileTest extends TestCase
 		$this->assertSame(UPLOAD_ERR_OK, $this->getPropertyValue($uploadedFile, 'error'));
 	}
 	
+	public function testConstructorThrowsExceptionOnInvalidFileArgument() {
+		$this->expectException(InvalidArgumentException::class);
+		$uploadedFile = new UploadedFile(
+			42,
+			$this->vfsFile->getName(),
+			"text/plain",
+			strlen($this->vfsFile->getContent()),
+			UPLOAD_ERR_OK
+		);
+	}
+	
+	public function testConstructorThrowsExceptionOnInvalidErrorArgument() {
+		$this->expectException(InvalidArgumentException::class);
+		$uploadedFile = new UploadedFile(
+			$this->vfsFile->url(),
+			$this->vfsFile->getName(),
+			"text/plain",
+			strlen($this->vfsFile->getContent()),
+			42
+		);
+	}
+	
+	public function testConstructorWithResourceAsFile() {
+		$handle = fopen("php://temp", "r+");
+		fwrite($handle, "Hello World !");
+		
+		$uploadedFile = new UploadedFile(
+			$handle,
+			"filename.txt",
+			"text/plain",
+			ftell($handle),
+			UPLOAD_ERR_OK
+		);
+		
+		$stream = $uploadedFile->getStream();
+		$this->assertEquals("Hello World !", (string) $stream);
+	}
+	
 	public function testGetSize() {
 		$uploadedFile = $this->getValidUploadedFile();
 		
@@ -114,6 +155,45 @@ class UploadedFileTest extends TestCase
 		$uploadedFile->moveTo($dst->url());
 		
 		$this->assertSame($srcContent, file_get_contents($dst->url()));
+	}
+	
+	public function testMoveToUsingStream() {
+		$src = new Stream("php://temp", "r+");
+		$src->write("Hello World !");
+		$dst = vfsStream::newFile("new_filename.txt")->at($this->vfsRoot);
+		
+		$this->assertEquals("Hello World !", (string) $src);
+		$this->assertEquals("", $dst->getContent());
+		
+		$uploadedFile = new UploadedFile(
+			$src,
+			null,
+			"text/plain",
+			$src->getSize(),
+			UPLOAD_ERR_OK
+		);
+		$uploadedFile->moveTo($dst->url());
+		
+		$this->assertEquals("Hello World !", $dst->getContent());
+	}
+	
+	public function testMoveToUsingStreamThrowsExceptionOnInvalidTarget() {
+		$src = new Stream("php://temp", "r+");
+		$src->write("Hello World !");
+		$dst = vfsStream::newFile("new_filename.txt", 007)->at($this->vfsRoot);
+		
+		$this->assertEquals("Hello World !", (string) $src);
+		$this->assertEquals("", $dst->getContent());
+		
+		$this->expectException(RuntimeException::class);
+		$uploadedFile = new UploadedFile(
+			$src,
+			null,
+			"text/plain",
+			$src->getSize(),
+			UPLOAD_ERR_OK
+		);
+		$uploadedFile->moveTo($dst->url());
 	}
 	
 	public function testMoveToThrowsExceptionOnAlreadyMovedFile() {

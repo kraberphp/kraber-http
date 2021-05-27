@@ -52,14 +52,15 @@ class UploadedFileTest extends TestCase
 	}
 	
 	public function testConstructorInitializesProperties() {
-		$uploadedFile = new UploadedFile();
+		$uploadedFile = $this->getValidUploadedFile();
 		
-		$this->assertNull($this->getPropertyValue($uploadedFile, 'file'));
-		$this->assertNull($this->getPropertyValue($uploadedFile, 'clientFilename'));
-		$this->assertNull($this->getPropertyValue($uploadedFile, 'clientMediaType'));
-		$this->assertNull($this->getPropertyValue($uploadedFile, 'size'));
+		$this->assertIsString($this->getPropertyValue($uploadedFile, 'file'));
+		$this->assertNull($this->getPropertyValue($uploadedFile, 'stream'));
+		$this->assertIsString($this->getPropertyValue($uploadedFile, 'clientFilename'));
+		$this->assertIsString($this->getPropertyValue($uploadedFile, 'clientMediaType'));
+		$this->assertIsInt($this->getPropertyValue($uploadedFile, 'size'));
 		$this->assertIsInt($this->getPropertyValue($uploadedFile, 'error'));
-		$this->assertSame(UPLOAD_ERR_NO_FILE, $this->getPropertyValue($uploadedFile, 'error'));
+		$this->assertSame(UPLOAD_ERR_OK, $this->getPropertyValue($uploadedFile, 'error'));
 	}
 	
 	public function testGetSize() {

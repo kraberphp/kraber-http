@@ -8,6 +8,7 @@ use Psr\Http\Message\{
 	UploadedFileInterface,
 	StreamInterface
 };
+use Throwable;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -21,14 +22,29 @@ use RuntimeException;
  */
 class UploadedFile implements UploadedFileInterface
 {
-	private ?StreamInterface $stream = null;
+	/** @var string|null Path of uploaded file. */
 	private ?string $file = null;
-	private ?string $clientFilename = null;
-	private ?string $clientMediaType = null;
+	
+	/** @var StreamInterface|null Stream of uploaded file contents. */
+	private ?StreamInterface $stream = null;
+	
+	/** @var string|null Filename as sent by the client. */
+	private ?string $clientFilename = "";
+	
+	/** @var string|null Mime as sent by the client. */
+	private ?string $clientMediaType = "";
+	
+	/** @var int|null File size as sent by the client. */
 	private ?int $size = null;
-	private int $error = UPLOAD_ERR_NO_FILE;
-	private bool $moved = false;
-	private static $errorStatus = [
+	
+	/** @var int Error status. */
+	private int $error = UPLOAD_ERR_OK;
+	
+	/** @var bool Has the downloaded file been moveTo() ? */
+	private bool $hasMoveTo = false;
+	
+	/** @var string[] Available UPLOAD_ERR_* constants and reason phrase. */
+	private const UPLOAD_ERRORS = [
 		UPLOAD_ERR_OK => 'There is no error, the file uploaded with success',
 		UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
 		UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form',
@@ -39,9 +55,33 @@ class UploadedFile implements UploadedFileInterface
 		UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload.',
 	];
 	
-	public function __construct(null|string|StreamInterface $file = null, ?string $clientFilename = null, ?string $clientMediaType = null, ?int $size = null, int $error = UPLOAD_ERR_NO_FILE) {
-		if (is_string($file)) $this->file = $file;
-		elseif (is_subclass_of($file, StreamInterface::class)) $this->stream = $file;
+	/**
+	 * UploadedFile constructor.
+	 *
+	 * @param StreamInterface|string|resource $fileOrStream
+	 * @param string $clientFilename
+	 * @param string $clientMediaType
+	 * @param int|null $size
+	 * @param int $error
+	 * @throws InvalidArgumentException
+	 */
+	public function __construct($fileOrStream, ?string $clientFilename, ?string $clientMediaType, ?int $size, int $error) {
+		if (!isset(self::UPLOAD_ERRORS[$error])) {
+			throw new InvalidArgumentException("Invalid error status. Error status must be the value of one of the 'UPLOAD_ERR_*' constants.");
+		}
+		
+		if (is_string($fileOrStream)) {
+			$this->file = $fileOrStream;
+		}
+		elseif ($fileOrStream instanceof StreamInterface) {
+			$this->stream = $fileOrStream;
+		}
+		elseif (is_resource($fileOrStream)) {
+			$this->stream = new Stream($fileOrStream);
+		}
+		else {
+			throw new InvalidArgumentException("Invalid file provided. File must be a string, a resource or an object implementing StreamInterface.");
+		}
 		
 		$this->clientFilename = $clientFilename;
 		$this->clientMediaType = $clientMediaType;
@@ -49,13 +89,18 @@ class UploadedFile implements UploadedFileInterface
 		$this->error = $error;
 	}
 	
+	/**
+	 * Ensure uploaded file is in a valid state (to be moved or to retrieve stream).
+	 *
+	 * @throws RuntimeException If state doesn't meet the requirements.
+	 */
 	private function ensureUploadedFileIsValid() : void {
-		if ($this->moved === true) {
+		if ($this->hasMoveTo === true) {
 			throw new RuntimeException("Uploaded file has already been moved.");
 		}
 		
 		if ($this->error !== UPLOAD_ERR_OK) {
-			throw new RuntimeException("Uploaded file error: ".self::$errorStatus[$this->error]);
+			throw new RuntimeException("Uploaded file error: ".self::UPLOAD_ERRORS[$this->error]);
 		}
 	}
 	
@@ -72,7 +117,7 @@ class UploadedFile implements UploadedFileInterface
 	 * an exception.
 	 *
 	 * @return StreamInterface Stream representation of the uploaded file.
-	 * @throws \RuntimeException in cases when no stream is available or can be
+	 * @throws RuntimeException in cases when no stream is available or can be
 	 *     created.
 	 */
 	public function getStream() : StreamInterface {
@@ -131,16 +176,36 @@ class UploadedFile implements UploadedFileInterface
 			throw new InvalidArgumentException('Invalid path provided.');
 		}
 		
-		if (!empty($this->file)) {
+		if ($this->file !== null) {
 			if (PHP_SAPI === 'cli') {
-				$this->moved = rename($this->file, $targetPath);
+				$this->hasMoveTo = rename($this->file, $targetPath);
 			}
 			else {
-				$this->moved = move_uploaded_file($this->file, $targetPath);
+				$this->hasMoveTo = move_uploaded_file($this->file, $targetPath);
 			}
 		}
+		elseif ($this->stream !== null) {
+			if ($this->stream->isSeekable()) {
+				$this->stream->rewind();
+			}
+			
+			try {
+				$dst = new Stream($targetPath, 'w');
+			}
+			catch (Throwable $e) {
+				throw new RuntimeException('The file '.$targetPath.' cannot be opened: '.$e->getMessage(), $e->getCode(), $e);
+			}
+			
+			while (!$this->stream->eof()) {
+				if (!$dst->write($this->stream->read(1048576))) {
+					break;
+				}
+			}
+			
+			$this->hasMoveTo = true;
+		}
 		
-		if ($this->moved === false) {
+		if ($this->hasMoveTo === false) {
 			throw new RuntimeException('Unable to move uploaded file to '.$targetPath);
 		}
 	}

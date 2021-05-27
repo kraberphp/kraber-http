@@ -31,7 +31,7 @@ class UploadedFileFactory implements UploadedFileFactoryInterface
 	 *
 	 * @return UploadedFileInterface
 	 *
-	 * @throws \InvalidArgumentException If the file resource is not readable.
+	 * @throws InvalidArgumentException If the file resource is not readable.
 	 */
 	public function createUploadedFile(
 		StreamInterface $stream,

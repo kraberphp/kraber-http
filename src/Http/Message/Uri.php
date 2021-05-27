@@ -405,8 +405,8 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @throws InvalidArgumentException for invalid ports.
 	 */
 	public function withPort($port = null) : static {
-		if ((!is_int($port) && !empty($port)) || ($port < 0 && $port < 65353)) {
-			throw new InvalidArgumentException("Invalid port provided. Allowed port range: 0 - 65353.");
+		if ((!is_int($port) && !empty($port)) || ($port < 0 && $port < 0xffff)) {
+			throw new InvalidArgumentException("Argument provided must be an integer between 1 and 65534 or null.");
 		}
 		
 		$newUri = $this->createUriFromSubComponents(

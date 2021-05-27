@@ -8,10 +8,24 @@ use InvalidArgumentException;
 
 class Uri implements \Psr\Http\Message\UriInterface
 {
+	/**
+	 * Parsed URL components
+	 * @var array $components
+	 */
 	private array $components = [];
 	
+	/**
+	 * @see https://datatracker.ietf.org/doc/html/rfc3986#section-2.2
+	 */
+	private const UNRESERVED_CHARACTERS = 'a-zA-Z0-9_-.~';
+	private const RESERVED_CHARACTERS = ":/?#[]@!$&'()*+,;=";
+	
 	public function __construct(string $uri = "") {
-		$this->components = parse_url($uri) ?: [];
+		$components = parse_url($uri);
+		
+		if (is_array($components)) {
+			$this->components = $components;
+		}
 	}
 	
 	/**
@@ -29,7 +43,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return string The URI scheme.
 	 */
 	public function getScheme() : string {
-		return mb_strtolower((isset($this->components['scheme']) ? $this->components['scheme'] : ""), "utf-8");
+		return mb_strtolower(($this->components['scheme'] ?? ""), "utf-8");
 	}
 	
 	/**
@@ -51,14 +65,12 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return string The URI authority, in "[user-info@]host[:port]" format.
 	 */
 	public function getAuthority() : string {
-		$authority = "";
+		list($userInfo, $host, $port) = [$this->getUserInfo(), $this->getHost(), $this->getPort()];
 		
-		$userInfo = $this->getUserInfo();
-		$host = $this->getHost();
-		$port = $this->getPort();
-		if (!empty($userInfo)) $authority = $userInfo."@";
-		if (!empty($host) || $host === "0") $authority .= $host;
-		if (!empty($port)) $authority .= ":".$port;
+		$authority = "";
+		if ($userInfo !== "") $authority = $userInfo."@";
+		if ($host !== "") $authority .= $host;
+		if ($port !== null) $authority .= ":".$port;
 		
 		return $authority;
 	}
@@ -79,11 +91,9 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return string The URI user information, in "username[:password]" format.
 	 */
 	public function getUserInfo() : string {
-		if (isset($this->components['user'])) {
-			return $this->components['user'].((isset($this->components['pass'])) ? ":".$this->components['pass'] : "");
-		}
-		
-		return "";
+		return isset($this->components['user']) ?
+			$this->components['user'].((isset($this->components['pass'])) ? ":".$this->components['pass'] : "") :
+			"";
 	}
 	
 	/**
@@ -98,11 +108,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return string The URI host.
 	 */
 	public function getHost() : string {
-		if (isset($this->components['host'])) {
-			return mb_strtolower($this->components['host'], "utf-8");
-		}
-		
-		return "";
+		return mb_strtolower(($this->components['host'] ?? ""), "utf-8");
 	}
 	
 	/**
@@ -121,12 +127,24 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return null|int The URI port.
 	 */
 	public function getPort() : ?int {
-		$defaultPort = isset($this->components['scheme']) ? getservbyname($this->components['scheme'], 'tcp') : false;
-		if (isset($this->components['port']) && $this->components['port'] !== $defaultPort) {
-			return (int) $this->components['port'];
+		return (isset($this->components['port']) && !$this->isDefaultPortForScheme($this->components['port'], $this->getScheme())) ?
+			$this->components['port'] :
+			null;
+	}
+	
+	/**
+	 * Check the port associated with a given scheme.
+	 *
+	 * @param int $port The URI port.
+	 * @param string $scheme The URI scheme.
+	 * @return bool True if specified port is associated with the given scheme.
+	 */
+	private function isDefaultPortForScheme(int $port, string $scheme) : bool {
+		if (empty($scheme)) {
+			return false;
 		}
 		
-		return null;
+		return getservbyname($scheme, "tcp") === $port;
 	}
 	
 	/**
@@ -155,24 +173,9 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return string The URI path.
 	 */
 	public function getPath() : string {
-		if (isset($this->components['path'])) {
-			$lslash = str_starts_with($this->components['path'], '/');
-			$rslash = strlen($this->components['path']) > 1 ? str_ends_with($this->components['path'], '/') : false;
-			
-			$path = implode('/',
-				array_filter(
-					array_map(
-						fn($partial) => rawurlencode(rawurldecode($partial)),
-						explode('/', trim($this->components['path'], '/'))
-					),
-					fn($partial) => !empty($partial) || $partial === "0"
-				)
-			);
-			
-			return ($lslash ? '/' : '').$path.($rslash ? '/' : '');
-		}
-		
-		return "";
+		return isset($this->components['path']) ?
+			$this->encodeUriComponent($this->components['path']) :
+			"";
 	}
 	
 	/**
@@ -196,28 +199,9 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return string The URI query string.
 	 */
 	public function getQuery() : string {
-		if (isset($this->components['query'])) {
-			return implode('&',
-				array_filter(
-					array_map(
-						function($pair) {
-							if (empty($pair) && $pair !== "0") return "";
-							
-							$arg = explode('=', $pair, 2);
-							if (isset($arg[0]) && isset($arg[1])) {
-								return $arg[0].'='.rawurlencode(rawurldecode($arg[1]));
-							}
-							
-							return $arg[0];
-						},
-						explode('&', $this->components['query'])
-					),
-					fn($pair) => !empty($pair) || $pair === "0"
-				)
-			);
-		}
-		
-		return "";
+		return isset($this->components['query']) ?
+			$this->encodeUriComponent($this->components['query']) :
+			"";
 	}
 	
 	/**
@@ -237,14 +221,41 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return string The URI fragment.
 	 */
 	public function getFragment() : string {
-		if (isset($this->components['fragment'])) {
-			return rawurlencode(rawurldecode($this->components['fragment']));
-		}
-		
-		return "";
+		return isset($this->components['fragment']) ?
+			$this->encodeUriComponent($this->components['fragment']) :
+			"";
 	}
 	
-	private function getFormattedUriFromArgs(
+	/**
+	 * Return encoded uri component based on RFC 3986 unreserved characters & reserved characters list.
+	 * This avoid double-encoding issues and keep already existing percent-encoded.
+	 *
+	 * @see https://tools.ietf.org/html/rfc3986#section-2
+	 * @see https://tools.ietf.org/html/rfc3986#section-3.3
+	 * @param string $component The URI component.
+	 * @return string The URI component encoded.
+	 */
+	private function encodeUriComponent(string $component) : string {
+		return preg_replace_callback(
+			"/(?:[^".preg_quote(self::UNRESERVED_CHARACTERS.self::RESERVED_CHARACTERS, "/")."%:@\/]+|%(?![a-fA-F0-9]{2}))/",
+			fn ($match) => rawurlencode($match[0]),
+			$component
+		);
+	}
+	
+	/**
+	 * Create a URI string based on args given.
+	 *
+	 * @param string $scheme The URI scheme.
+	 * @param string $userInfo The URI user information.
+	 * @param string $host The URI host.
+	 * @param int|null $port The URI port.
+	 * @param string $path The URI path.
+	 * @param string $query The URI query.
+	 * @param string $fragment The URI fragment.
+	 * @return string The formatted URI based on components provided.
+	 */
+	private function createUriFromSubComponents(
 		string $scheme,
 		string $userInfo,
 		string $host,
@@ -254,18 +265,24 @@ class Uri implements \Psr\Http\Message\UriInterface
 		string $fragment
 	) {
 		$uri = "";
-		
-		if (!empty($scheme)) $uri = $scheme.":";
-		
-		if (!empty($userInfo) || (!empty($host) || $host === "0")) $uri .= "//";
-		if (!empty($userInfo)) $uri .= $userInfo.'@';
-		if (!empty($host) || $host === "0") $uri .= $host;
-		
-		if (!empty($port)) $uri .= ':'.$port;
-		
-		if (!empty($path) || $path === "0") $uri .= $path;
-		if (!empty($query) || $query === "0") $uri .= '?'.$query;
-		if (!empty($fragment) || $fragment === "0") $uri .= '#'.$fragment;
+		if ($scheme !== "") $uri = $scheme.":";
+		if ($userInfo !== "" || $host !== "") $uri .= "//";
+		if ($userInfo !== "") $uri .= $userInfo.'@';
+		if ($host !== "") $uri .= $host;
+		if ($port !== null) $uri .= ':'.$port;
+		if ($path !== "") {
+			if ($userInfo === "" && $host === "" && str_starts_with($path, "//")) {
+				$path = "/".ltrim($path, "/");
+			}
+			elseif (($userInfo !== "" || $host !== "") && !str_starts_with($path, "/"))
+			{
+				$path = "/".$path;
+			}
+			
+			$uri .= $path;
+		}
+		if ($query !== "") $uri .= '?'.$query;
+		if ($fragment !== "") $uri .= '#'.$fragment;
 		
 		return $uri;
 	}
@@ -289,7 +306,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 			throw new InvalidArgumentException("Invalid scheme provided.");
 		}
 		
-		$newUri = $this->getFormattedUriFromArgs(
+		$newUri = $this->createUriFromSubComponents(
 			$scheme,
 			$this->getUserInfo(),
 			$this->getHost(),
@@ -323,7 +340,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 			if (is_string($password) && strlen($password)) $userInfo .= ':'.$password;
 		}
 		
-		$newUri = $this->getFormattedUriFromArgs(
+		$newUri = $this->createUriFromSubComponents(
 			$this->getScheme(),
 			$userInfo,
 			$this->getHost(),
@@ -352,7 +369,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 			throw new InvalidArgumentException("Invalid host provided.");
 		}
 		
-		$newUri = $this->getFormattedUriFromArgs(
+		$newUri = $this->createUriFromSubComponents(
 			$this->getScheme(),
 			$this->getUserInfo(),
 			$host,
@@ -383,11 +400,11 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @throws \InvalidArgumentException for invalid ports.
 	 */
 	public function withPort($port) : static {
-		if (!empty($port) && $port < 0 && $port < 65353) {
+		if ((!is_int($port) && !empty($port)) || ($port < 0 && $port < 65353)) {
 			throw new InvalidArgumentException("Invalid port provided. Allowed port range: 0 - 65353.");
 		}
 		
-		$newUri = $this->getFormattedUriFromArgs(
+		$newUri = $this->createUriFromSubComponents(
 			$this->getScheme(),
 			$this->getUserInfo(),
 			$this->getHost(),
@@ -426,7 +443,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 			throw new InvalidArgumentException("Invalid path provided.");
 		}
 		
-		$newUri = $this->getFormattedUriFromArgs(
+		$newUri = $this->createUriFromSubComponents(
 			$this->getScheme(),
 			$this->getUserInfo(),
 			$this->getHost(),
@@ -458,7 +475,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 			throw new InvalidArgumentException("Invalid query provided.");
 		}
 		
-		$newUri = $this->getFormattedUriFromArgs(
+		$newUri = $this->createUriFromSubComponents(
 			$this->getScheme(),
 			$this->getUserInfo(),
 			$this->getHost(),
@@ -490,7 +507,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 			throw new InvalidArgumentException("Invalid fragment provided.");
 		}
 		
-		$newUri = $this->getFormattedUriFromArgs(
+		$newUri = $this->createUriFromSubComponents(
 			$this->getScheme(),
 			$this->getUserInfo(),
 			$this->getHost(),
@@ -527,7 +544,7 @@ class Uri implements \Psr\Http\Message\UriInterface
 	 * @return string
 	 */
 	public function __toString() : string {
-		return $this->getFormattedUriFromArgs(
+		return $this->createUriFromSubComponents(
 			$this->getScheme(),
 			$this->getUserInfo(),
 			$this->getHost(),

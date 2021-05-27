@@ -226,7 +226,7 @@ class UriTest extends TestCase {
 			],
 			'url and absolute path with double slash' => [
 				"https://www.example.tld//privacy",
-				"/privacy"
+				"//privacy"
 			],
 			'rootless path and no trailing slash' => [
 				"account/profile",
@@ -298,7 +298,7 @@ class UriTest extends TestCase {
 			],
 			'query string 2 args with double ampersand' => [
 				"https://www.example.tld?foo&&alice",
-				"foo&alice"
+				"foo&&alice"
 			],
 			'query string 2 args not encoded' => [
 				"https://www.example.tld?foo=bar stub&alice=bob stub",
@@ -336,7 +336,7 @@ class UriTest extends TestCase {
 			],
 			'fragment not encoded' => [
 				"https://www.example.tld#account&settings",
-				"account%26settings"
+				"account&settings"
 			],
 			'fragment encoded' => [
 				"https://www.example.tld#account%26settings",
@@ -607,7 +607,7 @@ class UriTest extends TestCase {
 			'url append fragment not encoded' => [
 				"https://www.example.tld/",
 				"section/3.1",
-				"https://www.example.tld/#section%2F3.1",
+				"https://www.example.tld/#section/3.1",
 			],
 			'url replace fragment' => [
 				"https://www.example.tld/#test",
@@ -646,11 +646,11 @@ class UriTest extends TestCase {
 			],
 			'double slash in path' => [
 				"https://www.example.tld/foo//bar",
-				"https://www.example.tld/foo/bar",
+				"https://www.example.tld/foo//bar",
 			],
 			'double ampersand' => [
 				"https://www.example.tld/?foo&&bar",
-				"https://www.example.tld/?foo&bar",
+				"https://www.example.tld/?foo&&bar",
 			],
 			'decoded path' => [
 				"https://www.example.tld/my account",

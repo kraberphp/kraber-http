@@ -9,6 +9,8 @@ use Psr\Http\Message\{
 	StreamInterface
 };
 use Kraber\Http\Message\Stream;
+use Throwable;
+use RuntimeException;
 
 class StreamFactory implements StreamFactoryInterface
 {
@@ -38,10 +40,15 @@ class StreamFactory implements StreamFactoryInterface
 	 * @param string $filename Filename or stream URI to use as basis of stream.
 	 * @param string $mode Mode with which to open the underlying filename/stream.
 	 * @return StreamInterface
-	 * @throws InvalidArgumentException If the mode is invalid.
+	 * @throws RuntimeException
 	 */
 	public function createStreamFromFile(string $filename, string $mode = 'r') : StreamInterface {
-		return new Stream($filename, $mode);
+		try {
+			return new Stream($filename, $mode);
+		}
+		catch (Throwable $t) {
+			throw new RuntimeException($t->getMessage(), $t->getCode(), $t);
+		}
 	}
 	
 	/**

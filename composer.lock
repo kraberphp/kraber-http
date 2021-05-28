@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fb9d8c01cc7724b8de17c81d6d277cde",
+    "content-hash": "7a490aa4522569ecf8a49e09abeada5b",
     "packages": [
         {
             "name": "psr/http-factory",
@@ -184,6 +184,55 @@
                 }
             ],
             "time": "2020-11-10T18:47:58+00:00"
+        },
+        {
+            "name": "http-interop/http-factory-tests",
+            "version": "0.7.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/http-interop/http-factory-tests.git",
+                "reference": "fc461097f70941c0d4943a81c6612a6e36675bcb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/http-interop/http-factory-tests/zipball/fc461097f70941c0d4943a81c6612a6e36675bcb",
+                "reference": "fc461097f70941c0d4943a81c6612a6e36675bcb",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1 || ^8.0",
+                "phpunit/phpunit": "^6.5 || ^7.0 || ^8.0 || ^9.0",
+                "psr/http-factory": "^1.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Interop\\Http\\Factory\\": "test/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Unit tests for HTTP factories",
+            "keywords": [
+                "factory",
+                "http",
+                "psr-17",
+                "psr-7",
+                "test"
+            ],
+            "support": {
+                "issues": "https://github.com/http-interop/http-factory-tests/issues",
+                "source": "https://github.com/http-interop/http-factory-tests/tree/master"
+            },
+            "time": "2020-08-15T19:54:18+00:00"
         },
         {
             "name": "mikey179/vfsstream",
@@ -2132,16 +2181,16 @@
         },
         {
             "name": "symfony/polyfill-ctype",
-            "version": "v1.22.1",
+            "version": "v1.23.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-ctype.git",
-                "reference": "c6c942b1ac76c82448322025e084cadc56048b4e"
+                "reference": "46cd95797e9df938fdd2b03693b5fca5e64b01ce"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-ctype/zipball/c6c942b1ac76c82448322025e084cadc56048b4e",
-                "reference": "c6c942b1ac76c82448322025e084cadc56048b4e",
+                "url": "https://api.github.com/repos/symfony/polyfill-ctype/zipball/46cd95797e9df938fdd2b03693b5fca5e64b01ce",
+                "reference": "46cd95797e9df938fdd2b03693b5fca5e64b01ce",
                 "shasum": ""
             },
             "require": {
@@ -2153,7 +2202,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.22-dev"
+                    "dev-main": "1.23-dev"
                 },
                 "thanks": {
                     "name": "symfony/polyfill",
@@ -2191,7 +2240,7 @@
                 "portable"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.22.1"
+                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.23.0"
             },
             "funding": [
                 {
@@ -2207,7 +2256,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-01-07T16:49:33+00:00"
+            "time": "2021-02-19T12:13:01+00:00"
         },
         {
             "name": "theseer/tokenizer",

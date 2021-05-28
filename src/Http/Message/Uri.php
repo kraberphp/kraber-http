@@ -44,7 +44,9 @@ class Uri implements UriInterface
 	 * @return string The URI scheme.
 	 */
 	public function getScheme() : string {
-		return mb_strtolower(($this->components['scheme'] ?? ""), "utf-8");
+		return isset($this->components['scheme']) && $this->components['scheme'] !== null ?
+			mb_strtolower($this->components['scheme'], "utf-8") :
+			"";
 	}
 	
 	/**
@@ -92,8 +94,9 @@ class Uri implements UriInterface
 	 * @return string The URI user information, in "username[:password]" format.
 	 */
 	public function getUserInfo() : string {
-		return isset($this->components['user']) ?
-			$this->components['user'].((isset($this->components['pass'])) ? ":".$this->components['pass'] : "") :
+		return isset($this->components['user']) && $this->components['user'] !== null ?
+			$this->components['user'].(
+				(isset($this->components['pass']) && $this->components['pass'] !== null && $this->components['pass'] !== "") ? ":".$this->components['pass'] : "") :
 			"";
 	}
 	
@@ -109,7 +112,9 @@ class Uri implements UriInterface
 	 * @return string The URI host.
 	 */
 	public function getHost() : string {
-		return mb_strtolower(($this->components['host'] ?? ""), "utf-8");
+		return isset($this->components['host']) && $this->components['host'] !== null ?
+			mb_strtolower($this->components['host'], "utf-8") :
+			"";
 	}
 	
 	/**
@@ -128,7 +133,8 @@ class Uri implements UriInterface
 	 * @return null|int The URI port.
 	 */
 	public function getPort() : ?int {
-		return (isset($this->components['port']) && !$this->isDefaultPortForScheme($this->components['port'], $this->getScheme())) ?
+		return (isset($this->components['port']) && $this->components['port'] !== null &&
+			!$this->isDefaultPortForScheme($this->components['port'], $this->getScheme())) ?
 			$this->components['port'] :
 			null;
 	}
@@ -141,7 +147,7 @@ class Uri implements UriInterface
 	 * @return bool True if specified port is associated with the given scheme.
 	 */
 	private function isDefaultPortForScheme(int $port, string $scheme) : bool {
-		if (empty($scheme)) {
+		if ($scheme === "") {
 			return false;
 		}
 		
@@ -174,7 +180,7 @@ class Uri implements UriInterface
 	 * @return string The URI path.
 	 */
 	public function getPath() : string {
-		return isset($this->components['path']) ?
+		return isset($this->components['path']) && $this->components['path'] !== null ?
 			$this->encodeUriComponent($this->components['path']) :
 			"";
 	}
@@ -200,7 +206,7 @@ class Uri implements UriInterface
 	 * @return string The URI query string.
 	 */
 	public function getQuery() : string {
-		return isset($this->components['query']) ?
+		return isset($this->components['query']) && $this->components['query'] !== null ?
 			$this->encodeUriComponent($this->components['query']) :
 			"";
 	}
@@ -222,7 +228,7 @@ class Uri implements UriInterface
 	 * @return string The URI fragment.
 	 */
 	public function getFragment() : string {
-		return isset($this->components['fragment']) ?
+		return isset($this->components['fragment']) && $this->components['fragment'] !== null ?
 			$this->encodeUriComponent($this->components['fragment']) :
 			"";
 	}
@@ -245,53 +251,6 @@ class Uri implements UriInterface
 	}
 	
 	/**
-	 * Create a URI string based on args given.
-	 *
-	 * @param string $scheme The URI scheme.
-	 * @param string $userInfo The URI user information.
-	 * @param string $host The URI host.
-	 * @param int|null $port The URI port.
-	 * @param string $path The URI path.
-	 * @param string $query The URI query.
-	 * @param string $fragment The URI fragment.
-	 * @return string The formatted URI based on components provided.
-	 */
-	private function createUriFromSubComponents(
-		string $scheme,
-		string $userInfo,
-		string $host,
-		?int $port,
-		string $path,
-		string $query,
-		string $fragment
-	) {
-		$uri = "";
-		if ($userInfo !== "" || $host !== "") {
-			if ($scheme !== "") $uri = $scheme.":";
-			$uri .= "//";
-			if ($userInfo !== "") $uri .= $userInfo.'@';
-			if ($host !== "") $uri .= $host;
-			if ($port !== null) $uri .= ':'.$port;
-		}
-		
-		if ($path !== "") {
-			if ($userInfo === "" && $host === "" && str_starts_with($path, "//")) {
-				$path = "/".ltrim($path, "/");
-			}
-			elseif (($userInfo !== "" || $host !== "") && !str_starts_with($path, "/"))
-			{
-				$path = "/".$path;
-			}
-			
-			$uri .= $path;
-		}
-		if ($query !== "") $uri .= '?'.$query;
-		if ($fragment !== "") $uri .= '#'.$fragment;
-		
-		return $uri;
-	}
-	
-	/**
 	 * Return an instance with the specified scheme.
 	 *
 	 * This method MUST retain the state of the current instance, and return
@@ -311,17 +270,10 @@ class Uri implements UriInterface
 			throw new InvalidArgumentException("Argument provided must be a string, an empty string or null.");
 		}
 		
-		$newUri = $this->createUriFromSubComponents(
-			$scheme ?? "",
-			$this->getUserInfo(),
-			$this->getHost(),
-			$this->getPort(),
-			$this->getPath(),
-			$this->getQuery(),
-			$this->getFragment()
-		);
+		$newUri = clone $this;
+		$newUri->components['scheme'] = $scheme;
 		
-		return new static($newUri);
+		return $newUri;
 	}
 	
 	/**
@@ -334,28 +286,20 @@ class Uri implements UriInterface
 	 * user; an empty string for the user is equivalent to removing user
 	 * information.
 	 *
-	 * @param string $user The user name to use for authority.
+	 * @param string|null $user The user name to use for authority.
 	 * @param string|null $password The password associated with $user.
 	 * @return static A new instance with the specified user information.
 	 */
 	public function withUserInfo($user, $password = null) : static {
-		$userInfo = "";
-		if (is_string($user) && $user !== "") {
-			$userInfo = $user;
-			if (is_string($password) && $password !== "") $userInfo .= ':'.$password;
+		if (!(is_string($user) || is_null($user)) || !(is_string($password) || is_null($password))) {
+			throw new InvalidArgumentException("Argument provided must be a string, an empty string or null.");
 		}
 		
-		$newUri = $this->createUriFromSubComponents(
-			$this->getScheme(),
-			$userInfo,
-			$this->getHost(),
-			$this->getPort(),
-			$this->getPath(),
-			$this->getQuery(),
-			$this->getFragment()
-		);
+		$newUri = clone $this;
+		$newUri->components['user'] = $user;
+		$newUri->components['pass'] = $password;
 		
-		return new static($newUri);
+		return $newUri;
 	}
 	
 	/**
@@ -375,17 +319,10 @@ class Uri implements UriInterface
 			throw new InvalidArgumentException("Argument provided must be a string, an empty string or null.");
 		}
 		
-		$newUri = $this->createUriFromSubComponents(
-			$this->getScheme(),
-			$this->getUserInfo(),
-			$host ?? "",
-			$this->getPort(),
-			$this->getPath(),
-			$this->getQuery(),
-			$this->getFragment()
-		);
-		
-		return new static($newUri);
+		$newUri = clone $this;
+		$newUri->components['host'] = $host;
+
+		return $newUri;
 	}
 	
 	/**
@@ -410,17 +347,10 @@ class Uri implements UriInterface
 			throw new InvalidArgumentException("Argument provided must be an integer between 1 and 65534 or null.");
 		}
 		
-		$newUri = $this->createUriFromSubComponents(
-			$this->getScheme(),
-			$this->getUserInfo(),
-			$this->getHost(),
-			$port,
-			$this->getPath(),
-			$this->getQuery(),
-			$this->getFragment()
-		);
+		$newUri = clone $this;
+		$newUri->components['port'] = $port;
 		
-		return new static($newUri);
+		return $newUri;
 	}
 	
 	/**
@@ -450,17 +380,10 @@ class Uri implements UriInterface
 			throw new InvalidArgumentException("Argument provided must be a string, an empty string or null.");
 		}
 		
-		$newUri = $this->createUriFromSubComponents(
-			$this->getScheme(),
-			$this->getUserInfo(),
-			$this->getHost(),
-			$this->getPort(),
-			$path ?? "",
-			$this->getQuery(),
-			$this->getFragment()
-		);
+		$newUri = clone $this;
+		$newUri->components['path'] = $path;
 		
-		return new static($newUri);
+		return $newUri;
 	}
 	
 	/**
@@ -483,17 +406,10 @@ class Uri implements UriInterface
 			throw new InvalidArgumentException("Argument provided must be a string, an empty string or null.");
 		}
 		
-		$newUri = $this->createUriFromSubComponents(
-			$this->getScheme(),
-			$this->getUserInfo(),
-			$this->getHost(),
-			$this->getPort(),
-			$this->getPath(),
-			$query ?? "",
-			$this->getFragment()
-		);
+		$newUri = clone $this;
+		$newUri->components['query'] = $query;
 		
-		return new static($newUri);
+		return $newUri;
 	}
 	
 	/**
@@ -516,17 +432,10 @@ class Uri implements UriInterface
 			throw new InvalidArgumentException("Argument provided must be a string, an empty string or null.");
 		}
 		
-		$newUri = $this->createUriFromSubComponents(
-			$this->getScheme(),
-			$this->getUserInfo(),
-			$this->getHost(),
-			$this->getPort(),
-			$this->getPath(),
-			$this->getQuery(),
-			$fragment ?? ""
-		);
+		$newUri = clone $this;
+		$newUri->components['fragment'] = $fragment;
 		
-		return new static($newUri);
+		return $newUri;
 	}
 	
 	/**
@@ -553,14 +462,52 @@ class Uri implements UriInterface
 	 * @return string
 	 */
 	public function __toString() : string {
-		return $this->createUriFromSubComponents(
-			$this->getScheme(),
-			$this->getUserInfo(),
-			$this->getHost(),
-			$this->getPort(),
-			$this->getPath(),
-			$this->getQuery(),
-			$this->getFragment()
-		);
+		$scheme = $this->getScheme();
+		$userInfo = $this->getUserInfo();
+		$host = $this->getHost();
+		$port = $this->getPort();
+		$path = $this->getPath();
+		$query = $this->getQuery();
+		$fragment = $this->getFragment();
+
+		/*
+		$uri = "";
+		$isPathOnly = !($userInfo !== "" || $host !== "");
+		if ($isPathOnly === false) {
+			$uri = ($scheme !== "") ? $scheme.":" : "";
+			$uri .= "//";
+			$uri .= ($userInfo !== "") ? $userInfo."@" : "";
+			$uri .= ($host !== "") ? $host : "";
+			$uri .= ($port !== null) ? ":".$port : "";
+		}
+		
+		if ($path !== "") {
+			if ($isPathOnly === true && str_starts_with($path, "//")) {
+				$path = "/".ltrim($path, "/");
+			}
+			elseif ($isPathOnly === false && !str_starts_with($path, "/")) {
+				$path = "/".$path;
+			}
+			
+			$uri .= $path;
+		}
+		
+		$uri .= ($query !== "") ? "?".$query : "";
+		$uri .= ($fragment !== "") ? "#".$fragment : "";
+		*/
+		
+		$uri = "";
+		$isPathOnly = !($userInfo !== "" || $host !== "");
+		if ($isPathOnly === false) {
+			$uri = (($scheme !== "") ? $scheme.":" : "")."//".(($userInfo !== "") ? $userInfo."@" : "").$host.(($port !== null) ? ":".$port : "");
+		}
+		
+		$uri .= (($path !== "" && str_starts_with($path, "/") === false) ? "/".$path : $path).(($query !== "") ? "?".$query : "").(($fragment !== "") ? "#".$fragment : "");
+		
+		if ($isPathOnly === true && str_starts_with($uri, "//") === true) {
+			$uri = "/".ltrim($uri, "/");
+		}
+		
+		return $uri;
 	}
 }

@@ -435,6 +435,18 @@ class UriTest extends TestCase {
 		];
 	}
 	
+	public function testWithUserInfoThrowsExceptionOnInvalidUser() {
+		$this->expectException(InvalidArgumentException::class);
+		$target = new Uri("https://www.example.tld/");
+		$target->withUserInfo(42);
+	}
+	
+	public function testWithUserInfoThrowsExceptionOnInvalidPassword() {
+		$this->expectException(InvalidArgumentException::class);
+		$target = new Uri("https://www.example.tld/");
+		$target->withUserInfo(42);
+	}
+	
 	/**
 	 * @dataProvider providerWithHost
 	 */

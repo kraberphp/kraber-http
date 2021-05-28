@@ -11,11 +11,22 @@ use RuntimeException;
 
 class Stream implements StreamInterface
 {
-	private $stream;
+	/** @var resource|null The Stream.  */
+	private $stream = null;
+	
+	/** @var array Stream metadata. */
 	private array $meta = [];
+	
+	/** @var bool Is seekable ? */
 	private bool $isSeekable = false;
+	
+	/** @var bool Is readable ? */
 	private bool $isReadable = false;
+	
+	/** @var bool Is writable ? */
 	private bool $isWritable = false;
+	
+	/** @var bool[][] Stream modes allowing read or write operations. */
 	private const READ_WRITE_MODES = [
 		'read' => [
 			'r' => true, 'w+' => true, 'r+' => true, 'x+' => true, 'c+' => true,
@@ -85,7 +96,7 @@ class Stream implements StreamInterface
 			$data = $this->getContents();
 			$this->seek($offset);
 		}
-		catch (Throwable $e) {
+		catch (Throwable) {
 			return "";
 		}
 		
@@ -102,9 +113,7 @@ class Stream implements StreamInterface
 			fclose($this->stream);
 		}
 		
-		$this->stream = null;
-		$this->meta = [];
-		$this->isSeekable = $this->isWritable = $this->isReadable = false;
+		$this->clearIntervalState();
 	}
 	
 	/**
@@ -117,11 +126,17 @@ class Stream implements StreamInterface
 	public function detach() {
 		$stream = $this->stream;
 		
+		$this->clearIntervalState();
+		return $stream;
+	}
+	
+	/**
+	 * Clear interval state of the Stream.
+	 */
+	private function clearIntervalState() : void {
 		$this->stream = null;
 		$this->meta = [];
 		$this->isSeekable = $this->isWritable = $this->isReadable = false;
-		
-		return $stream;
 	}
 	
 	/**
@@ -132,7 +147,7 @@ class Stream implements StreamInterface
 	public function getSize() : ?int {
 		try {
 			$fstat = fstat($this->stream);
-			return $fstat['size'] ?: null;
+			return $fstat['size'] ?? null;
 		}
 		catch (Throwable) {
 			return null;
@@ -274,7 +289,9 @@ class Stream implements StreamInterface
 	 *     reading.
 	 */
 	public function getContents() : string {
-		if (!$this->stream) throw new RuntimeException("Stream is in an unusable state.");
+		if ($this->stream === null) {
+			throw new RuntimeException("Stream is in an unusable state.");
+		}
 		
 		return stream_get_contents($this->stream);
 	}
@@ -292,8 +309,8 @@ class Stream implements StreamInterface
 	 *     value is found, or null if the key is not found.
 	 */
 	public function getMetadata($key = null) : array|string|bool|null {
-		return ($this->stream && $key === null) ?
+		return ($this->stream !== null && $key === null) ?
 			$this->meta :
-			(isset($this->meta[$key]) ? $this->meta[$key] : null);
+			($this->meta[$key] ?? null);
 	}
 }

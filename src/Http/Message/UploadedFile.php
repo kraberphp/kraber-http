@@ -193,12 +193,12 @@ class UploadedFile implements UploadedFileInterface
 				$dst = new Stream($targetPath, 'w');
 			}
 			catch (Throwable $e) {
-				throw new RuntimeException('The file '.$targetPath.' cannot be opened: '.$e->getMessage(), $e->getCode(), $e);
+				throw new RuntimeException("Target path cannot be opened: ".$e->getMessage(), $e->getCode(), $e);
 			}
 			
 			while (!$this->stream->eof()) {
 				if ($dst->write($this->stream->read(1024000)) === 0) {
-					break;
+					throw new RuntimeException("Error occurred while writing stream to target.");
 				}
 			}
 			

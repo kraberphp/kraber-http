@@ -177,6 +177,22 @@ class UploadedFileTest extends TestCase
 		$this->assertEquals("Hello World !", $dst->getContent());
 	}
 	
+	public function testMoveToUsingStreamThrowExceptionOnWriteFailure() {
+		$src = new Stream("php://temp", "r+");
+		$src->write("Hello World !");
+		
+		$uploadedFile = new UploadedFile(
+			$src,
+			$src->getSize(),
+			UPLOAD_ERR_OK,
+			null,
+			"text/plain",
+		);
+		
+		$this->expectException(RuntimeException::class);
+		$uploadedFile->moveTo("php://input");
+	}
+	
 	public function testMoveToUsingStreamThrowsExceptionOnInvalidTarget() {
 		$src = new Stream("php://temp", "r+");
 		$src->write("Hello World !");

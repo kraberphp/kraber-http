@@ -248,7 +248,7 @@ class Stream implements StreamInterface
 			throw new RuntimeException($t->getMessage(), $t->getCode(), $t);
 		}
 		
-		return $written;
+		return $written !== false ? $written : 0;
 	}
 	
 	/**

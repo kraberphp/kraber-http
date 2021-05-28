@@ -30,6 +30,6 @@ class ServerRequestFactory implements ServerRequestFactoryInterface
 	 * @return ServerRequestInterface
 	 */
 	public function createServerRequest(string $method, $uri, array $serverParams = []) : ServerRequestInterface {
-		return new ServerRequest($uri, $method, serverParams: $serverParams);
+		return new ServerRequest($method, $uri, serverParams: $serverParams);
 	}
 }

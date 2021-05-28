@@ -4,11 +4,7 @@ declare(strict_types=1);
 
 namespace Kraber\Http\Message;
 
-use Psr\Http\Message\{
-	UriInterface,
-	StreamInterface,
-	ServerRequestInterface
-};
+use Psr\Http\Message\{ServerRequestInterface, StreamInterface, UploadedFileInterface, UriInterface};
 use InvalidArgumentException;
 
 /**
@@ -51,22 +47,44 @@ use InvalidArgumentException;
  */
 class ServerRequest extends Request implements ServerRequestInterface
 {
+	/** @var array Request environment. */
 	protected array $serverParams = [];
+	
+	/** @var array Cookies sent by the client. */
 	protected array $cookieParams = [];
+	
+	/** @var array Query string arguments. */
 	protected array $queryParams = [];
+	
+	/** @var array An array of UploadedFileInterface instances with files sent by the client. */
 	protected array $uploadedFiles = [];
+	
+	/** @var null|array|object Parsed body. */
 	protected null|array|object $parsedBody = null;
+	
+	/** @var array Attributes derived from the request. */
 	protected array $attributes = [];
 	
+	/**
+	 * ServerRequest constructor.
+	 *
+	 * @param string $method
+	 * @param string|UriInterface|null $uri
+	 * @param array $headers
+	 * @param StreamInterface|null $body
+	 * @param string $version
+	 * @param array|null $serverParams
+	 */
 	public function __construct(
-		string|null|UriInterface $uri = null,
 		string $method = "GET",
+		string|UriInterface|null $uri = null,
 		array $headers = [],
 		?StreamInterface $body = null,
 		string $version = "1.1",
 		?array $serverParams = null
 	) {
 		parent::__construct($uri, $method, $headers, $body, $version);
+		
 		$this->serverParams = $serverParams ?? $_SERVER;
 	}
 	
@@ -191,12 +209,12 @@ class ServerRequest extends Request implements ServerRequestInterface
 	 *
 	 * @param array $uploadedFiles An array tree of UploadedFileInterface instances.
 	 * @return static
-	 * @throws \InvalidArgumentException if an invalid structure is provided.
+	 * @throws InvalidArgumentException if an invalid structure is provided.
 	 */
 	public function withUploadedFiles(array $uploadedFiles) : static {
 		foreach ($uploadedFiles as $uploadedFile) {
-			if (!($uploadedFile instanceof UploadedFile)) {
-				throw new InvalidArgumentException("Invalid argument provided. Argument should be an array of UploadedFile objects.");
+			if (!($uploadedFile instanceof UploadedFileInterface)) {
+				throw new InvalidArgumentException("Invalid argument provided. Argument should be an array of objects implementing UploadedFileInterface.");
 			}
 		}
 		
@@ -250,7 +268,7 @@ class ServerRequest extends Request implements ServerRequestInterface
 	 * @param null|array|object $data The deserialized body data. This will
 	 *     typically be in an array or object.
 	 * @return static
-	 * @throws \InvalidArgumentException if an unsupported argument type is
+	 * @throws InvalidArgumentException if an unsupported argument type is
 	 *     provided.
 	 */
 	public function withParsedBody($data) : static {

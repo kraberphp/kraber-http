@@ -24,11 +24,11 @@ class RequestTest extends TestCase
 	
 	public function testConstructorThrowsExceptionOnInvalidHttpMethod() {
 		$this->expectException(InvalidArgumentException::class);
-		$request = new Request("/", "ping");
+		$request = new Request("1337", "/");
 	}
 	
 	public function testWithRequestTarget() {
-		$request = new Request("https://www.example.tld/test");
+		$request = new Request("GET", "https://www.example.tld/test");
 		$newRequest = $request->withRequestTarget("/foo");
 		
 		$this->assertNotSame($newRequest, $request);
@@ -39,13 +39,13 @@ class RequestTest extends TestCase
 	}
 	
 	public function testGetRequestTarget() {
-		$request = new Request("https://www.example.tld/test?bar=foo");
+		$request = new Request("GET", "https://www.example.tld/test?bar=foo");
 		$this->assertEquals("/test?bar=foo", $request->getRequestTarget());
 		$this->assertEquals("www.example.tld", $request->getHeaderLine("host"));
 	}
 	
 	public function testWithUriPreserveHost() {
-		$request = new Request("https://www.example.tld/test");
+		$request = new Request("GET", "https://www.example.tld/test");
 		$newRequest = $request->withUri(new Uri("https://www.sample.tld/foo"), true);
 		
 		$this->assertNotSame($newRequest, $request);
@@ -56,7 +56,7 @@ class RequestTest extends TestCase
 	}
 	
 	public function testWithUriCanReplaceHostHeader() {
-		$request = new Request("https://www.example.tld/test");
+		$request = new Request("GET", "https://www.example.tld/test");
 		$newRequest = $request->withUri(new Uri("https://www.sample.tld/foo"), false);
 		
 		$this->assertNotSame($newRequest, $request);
@@ -67,7 +67,7 @@ class RequestTest extends TestCase
 	}
 	
 	public function testWithUriUsingACustomPortCanReplaceHostHeaderAndKeepCustomPort() {
-		$request = new Request("https://www.example.tld/test");
+		$request = new Request("GET", "https://www.example.tld/test");
 		$newRequest = $request->withUri(new Uri("https://www.sample.tld:8080/foo"), false);
 		
 		$this->assertNotSame($newRequest, $request);
@@ -78,7 +78,7 @@ class RequestTest extends TestCase
 	}
 	
 	public function testWithMethod() {
-		$request = new Request("https://www.example.tld/test", "GET");
+		$request = new Request("GET", "https://www.example.tld/test");
 		$newRequest = $request->withMethod("post");
 		
 		$this->assertNotSame($newRequest, $request);
@@ -87,7 +87,7 @@ class RequestTest extends TestCase
 	}
 	
 	public function testWithMethodPreserveMethodCase() {
-		$request = new Request("https://www.example.tld/test", "GET");
+		$request = new Request("GET", "https://www.example.tld/test");
 		$newRequest = $request->withMethod("poSt");
 		
 		$this->assertNotSame($newRequest, $request);
@@ -96,9 +96,9 @@ class RequestTest extends TestCase
 	}
 	
 	public function testWithMethodThrowsExceptionOnInvalidHttpMethod() {
-		$request = new Request("https://www.example.tld/test");
+		$request = new Request("GET", "https://www.example.tld/test");
 		
 		$this->expectException(InvalidArgumentException::class);
-		$request->withMethod("ping");
+		$request->withMethod("1337");
 	}
 }

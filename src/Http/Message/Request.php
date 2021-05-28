@@ -32,35 +32,41 @@ use InvalidArgumentException;
  */
 class Request extends AbstractMessage implements RequestInterface
 {
-	protected UriInterface $uri;
-	protected string $method = "GET";
-	protected string $requestTarget = "";
-	private static $httpMethods = [
-		'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE'
-	];
+	/** @var string Request HTTP method. */
+	private string $method = "GET";
 	
+	/** @var UriInterface Request URI.  */
+	private UriInterface $uri;
+	
+	/** @var string Request target. */
+	private string $requestTarget = "";
+	
+	/**
+	 * Request constructor.
+	 *
+	 * @param string $method
+	 * @param string|UriInterface|null $uri
+	 * @param array $headers
+	 * @param StreamInterface|null $body
+	 * @param string $version
+	 * @throws InvalidArgumentException If invalid HTTP method is provided.
+	 */
 	public function __construct(
-		string|null|UriInterface $uri = null,
 		string $method = "GET",
+		string|UriInterface|null $uri = null,
 		array $headers = [],
 		?StreamInterface $body = null,
 		string $version = "1.1"
 	) {
 		parent::__construct($headers, $body, $version);
 		
+		$this->validateHttpMethod($method);
 		if (is_string($uri) || is_null($uri)) {
-			$uri = new Uri(is_null($uri) ? '/' : $uri);
+			$uri = new Uri($uri ?? "/");
 		}
 		
 		$this->uri = $uri;
-		
-		$method = strtoupper($method);
-		if (!in_array($method, self::$httpMethods)) {
-			throw new InvalidArgumentException("Invalid HTTP method provided. Allowed methods : ".implode(',', self::$httpMethods));
-		}
-		
 		$this->method = $method;
-		
 		$this->updateHostHeaderFromUri();
 	}
 	
@@ -85,11 +91,7 @@ class Request extends AbstractMessage implements RequestInterface
 			return $this->requestTarget;
 		}
 		
-		$target = '/';
-		if ($this->uri->getPath()) {
-			$target = $this->uri->getPath();
-		}
-		
+		$target = $this->uri->getPath() ?? "/";
 		if ($this->uri->getQuery()) {
 			$target .= '?'.$this->uri->getQuery();
 		}
@@ -143,17 +145,30 @@ class Request extends AbstractMessage implements RequestInterface
 	 *
 	 * @param string $method Case-sensitive method.
 	 * @return static
-	 * @throws \InvalidArgumentException for invalid HTTP methods.
+	 * @throws InvalidArgumentException for invalid HTTP methods.
 	 */
 	public function withMethod($method) : static {
-		if (!is_string($method) || !in_array(strtoupper($method), self::$httpMethods)) {
-			throw new InvalidArgumentException("Invalid HTTP method provided. Allowed methods : ".implode(',', self::$httpMethods));
+		if (!is_string($method)) {
+			throw new InvalidArgumentException("Invalid argument provided. String expected.");
 		}
 		
+		$this->validateHttpMethod($method);
 		$newRequest = clone $this;
 		$newRequest->method = $method;
 		
 		return $newRequest;
+	}
+	
+	/**
+	 * Validate the format of an HTTP method.
+	 *
+	 * @param string $method
+	 * @throws InvalidArgumentException for invalid HTTP methods.
+	 */
+	private function validateHttpMethod(string $method) : void {
+		if (!preg_match('/^[A-Za-z]+$/', $method)) {
+			throw new InvalidArgumentException("Invalid HTTP method provided, method must only be letters.");
+		}
 	}
 	
 	/**

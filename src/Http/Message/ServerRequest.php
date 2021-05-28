@@ -53,22 +53,22 @@ use InvalidArgumentException;
 class ServerRequest extends Request implements ServerRequestInterface
 {
 	/** @var array Request environment. */
-	protected array $serverParams = [];
+	private array $serverParams = [];
 	
 	/** @var array Cookies sent by the client. */
-	protected array $cookieParams = [];
+	private array $cookieParams = [];
 	
 	/** @var array Query string arguments. */
-	protected array $queryParams = [];
+	private array $queryParams = [];
 	
 	/** @var array An array of UploadedFileInterface instances with files sent by the client. */
-	protected array $uploadedFiles = [];
+	private array $uploadedFiles = [];
 	
 	/** @var null|array|object Parsed body. */
-	protected null|array|object $parsedBody = null;
+	private null|array|object $parsedBody = null;
 	
 	/** @var array Attributes derived from the request. */
-	protected array $attributes = [];
+	private array $attributes = [];
 	
 	/**
 	 * ServerRequest constructor.
@@ -88,7 +88,7 @@ class ServerRequest extends Request implements ServerRequestInterface
 		string $version = "1.1",
 		?array $serverParams = null
 	) {
-		parent::__construct($uri, $method, $headers, $body, $version);
+		parent::__construct($method, $uri, $headers, $body, $version);
 		
 		$this->serverParams = $serverParams ?? $_SERVER;
 	}

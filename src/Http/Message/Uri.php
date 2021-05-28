@@ -476,14 +476,8 @@ class Uri implements UriInterface
 		$query = $this->getQuery();
 		$fragment = $this->getFragment();
 		
-		$uri = "";
-		if ($scheme !== "") {
-			$uri .= $scheme.":";
-		}
-		
-		if ($authority !== "") {
-			$uri .= "//".$authority;
-		}
+		$uri = $scheme."://".$authority;
+		$uri = ltrim($uri, ':');
 		
 		if ($path !== "") {
 			if (str_starts_with($path, "/") === false) {

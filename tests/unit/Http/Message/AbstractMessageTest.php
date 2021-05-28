@@ -275,7 +275,7 @@ class AbstractMessageTest extends TestCase
 		$this->assertFalse($newMessage->hasHeader("Last-Modified"));
 	}
 	
-	public function testWithoutHeaderOnNonExistingHeaderNameKeepAllHeaders() {
+	public function testWithoutHeaderOnNonExistingHeaderNameKeepAllHeadersAndReturnSameObject() {
 		$headers = [
 			'Date' => ['Mon, 23 May 2005 22:38:34 GMT'],
 			'Content-Type' => ['text/html; charset=UTF-8'],
@@ -288,7 +288,7 @@ class AbstractMessageTest extends TestCase
 		];
 		$message = $this->getRawMessageImplementation($headers);
 		$newMessage = $message->withoutHeader("X-Custom-Header");
-		$this->assertNotSame($newMessage, $message);
+		$this->assertSame($newMessage, $message);
 		$this->assertFalse($newMessage->hasHeader("X-Custom-Header"));
 		$this->assertSame($headers, $newMessage->getHeaders());
 	}

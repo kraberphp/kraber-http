@@ -5,25 +5,39 @@ declare(strict_types=1);
 namespace Kraber\Http\Message;
 
 use \Psr\Http\Message\{
-	StreamInterface,
-	MessageInterface
+	MessageInterface,
+	StreamInterface
 };
 use InvalidArgumentException;
 
 abstract class AbstractMessage implements MessageInterface
 {
+	/** @var array Message headers. */
 	protected array $headers = [];
+	
+	/** @var array Internal header names mapping case-insensitive => case-sensitive. */
 	protected array $headerNames = [];
+	
+	/** @var StreamInterface Message body.  */
 	protected StreamInterface $body;
+	
+	/** @var string Message version. */
 	protected string $version = "1.1";
 	
+	/**
+	 * AbstractMessage constructor.
+	 *
+	 * @param array $headers
+	 * @param StreamInterface|null $body
+	 * @param string $version
+	 */
 	public function __construct(
 		array $headers = [],
 		?StreamInterface $body = null,
 		string $version = "1.1"
 	) {
 		$this->headers = $headers;
-		$this->body = !empty($body) ? $body : new Stream(fopen("php://memory", "r+"));
+		$this->body = !empty($body) ? $body : new Stream(fopen("php://temp", "r+"));
 		$this->version = $version;
 		
 		$this->updateHeaderNames();
@@ -89,10 +103,19 @@ abstract class AbstractMessage implements MessageInterface
 		return $this->headers;
 	}
 	
+	/**
+	 * Normalize an header name.
+	 *
+	 * @param string $name
+	 * @return string Normalized header name.
+	 */
 	protected function normalizedHeaderName(string $name) : string {
-		return trim(mb_strtolower($name, 'utf-8'));
+		return trim(mb_strtolower($name, "utf-8"));
 	}
 	
+	/**
+	 * Update internal mapping between case-insensitive name and case-sensitive name.
+	 */
 	protected function updateHeaderNames() : void {
 		$this->headerNames = array_combine(
 			array_map(fn ($key) => $this->normalizedHeaderName($key), array_keys($this->headers)),
@@ -109,9 +132,7 @@ abstract class AbstractMessage implements MessageInterface
 	 *     no matching header name is found in the message.
 	 */
 	public function hasHeader($name) : bool {
-		return is_string($name) ?
-			isset($this->headerNames[$this->normalizedHeaderName($name)]) :
-			false;
+		return is_string($name) && isset($this->headerNames[$this->normalizedHeaderName($name)]);
 	}
 	
 	/**
@@ -172,16 +193,10 @@ abstract class AbstractMessage implements MessageInterface
 	 * @param string $name Case-insensitive header field name.
 	 * @param string|string[] $value Header value(s).
 	 * @return static
-	 * @throws \InvalidArgumentException for invalid header names or values.
+	 * @throws InvalidArgumentException for invalid header names or values.
 	 */
 	public function withHeader($name, $value) : static {
-		if (!is_string($name) || empty($name)) {
-			throw new InvalidArgumentException("Invalid header name provided, must be a string.");
-		}
-		
-		if (!is_string($value) && !(is_array($value) && !empty($value))) {
-			throw new InvalidArgumentException("Invalid header value(s) provided must be a string or an array of string.");
-		}
+		$this->validateHeaderNameAndHeaderValue($name, $value);
 		
 		$newMessage = clone $this;
 		if (!$newMessage->hasHeader($name)) {
@@ -206,16 +221,10 @@ abstract class AbstractMessage implements MessageInterface
 	 * @param string $name Case-insensitive header field name to add.
 	 * @param string|string[] $value Header value(s).
 	 * @return static
-	 * @throws \InvalidArgumentException for invalid header names or values.
+	 * @throws InvalidArgumentException for invalid header names or values.
 	 */
 	public function withAddedHeader($name, $value) : static {
-		if (!is_string($name) || empty($name)) {
-			throw new InvalidArgumentException("Invalid header name provided, must be a string.");
-		}
-		
-		if (!is_string($value) && !(is_array($value) && !empty($value))) {
-			throw new InvalidArgumentException("Invalid header value(s) provided must be a string or an array of string.");
-		}
+		$this->validateHeaderNameAndHeaderValue($name, $value);
 		
 		$normalizedName = $this->normalizedHeaderName($name);
 
@@ -236,6 +245,23 @@ abstract class AbstractMessage implements MessageInterface
 	}
 	
 	/**
+	 * Ensure withHeader/withAddedHeader arguments are valid.
+	 *
+	 * @param string $name Case-insensitive header field name to add.
+	 * @param string|string[] $value Header value(s).
+	 * @throws InvalidArgumentException for invalid header names or values.
+	 */
+	private function validateHeaderNameAndHeaderValue($name, $value) : void {
+		if (!is_string($name) || empty($name)) {
+			throw new InvalidArgumentException("Invalid header name provided, must be a string.");
+		}
+		
+		if (!is_string($value) && !(is_array($value) && !empty($value))) {
+			throw new InvalidArgumentException("Invalid header value(s) provided must be a string or an array of string.");
+		}
+	}
+	
+	/**
 	 * Return an instance without the specified header.
 	 *
 	 * Header resolution MUST be done without case-sensitivity.
@@ -248,11 +274,13 @@ abstract class AbstractMessage implements MessageInterface
 	 * @return static
 	 */
 	public function withoutHeader($name) : static {
-		$newMessage = clone $this;
-		if ($newMessage->hasHeader($name)) {
-			unset($newMessage->headers[$newMessage->headerNames[$this->normalizedHeaderName($name)]]);
-			$newMessage->updateHeaderNames();
+		if (!$this->hasHeader($name)) {
+			return $this;
 		}
+		
+		$newMessage = clone $this;
+		unset($newMessage->headers[$newMessage->headerNames[$this->normalizedHeaderName($name)]]);
+		$newMessage->updateHeaderNames();
 		
 		return $newMessage;
 	}
@@ -277,11 +305,11 @@ abstract class AbstractMessage implements MessageInterface
 	 *
 	 * @param StreamInterface $body Body.
 	 * @return static
-	 * @throws \InvalidArgumentException When the body is not valid.
+	 * @throws InvalidArgumentException When the body is not valid.
 	 */
 	public function withBody(StreamInterface $body) : static {
 		if (!$body->isSeekable()) {
-			throw new InvalidArgumentException("Provided StreamInterface is not seekable.");
+			throw new InvalidArgumentException("StreamInterface must be seekable.");
 		}
 		
 		$newMessage = clone $this;

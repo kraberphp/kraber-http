@@ -71,9 +71,17 @@ class Uri implements UriInterface
 		list($userInfo, $host, $port) = [$this->getUserInfo(), $this->getHost(), $this->getPort()];
 		
 		$authority = "";
-		if ($userInfo !== "") $authority = $userInfo."@";
-		if ($host !== "") $authority .= $host;
-		if ($port !== null) $authority .= ":".$port;
+		if ($userInfo !== "") {
+			$authority = $userInfo."@";
+		}
+		
+		if ($host !== "") {
+			$authority .= $host;
+		}
+		
+		if ($port !== null) {
+			$authority .= ":".$port;
+		}
 		
 		return $authority;
 	}
@@ -469,40 +477,19 @@ class Uri implements UriInterface
 		$path = $this->getPath();
 		$query = $this->getQuery();
 		$fragment = $this->getFragment();
-
-		/*
+		
 		$uri = "";
-		$isPathOnly = !($userInfo !== "" || $host !== "");
+		$isPathOnly = ($userInfo === "" && $host === "");
 		if ($isPathOnly === false) {
 			$uri = ($scheme !== "") ? $scheme.":" : "";
 			$uri .= "//";
 			$uri .= ($userInfo !== "") ? $userInfo."@" : "";
-			$uri .= ($host !== "") ? $host : "";
-			$uri .= ($port !== null) ? ":".$port : "";
+			$uri .= $host;
+			$uri .= ($host !== "" && $port !== null) ? ":".$port : "";
 		}
-		
-		if ($path !== "") {
-			if ($isPathOnly === true && str_starts_with($path, "//")) {
-				$path = "/".ltrim($path, "/");
-			}
-			elseif ($isPathOnly === false && !str_starts_with($path, "/")) {
-				$path = "/".$path;
-			}
-			
-			$uri .= $path;
-		}
-		
+		$uri .= ($path !== "" && str_starts_with($path, "/") === false) ? "/".$path : $path;
 		$uri .= ($query !== "") ? "?".$query : "";
 		$uri .= ($fragment !== "") ? "#".$fragment : "";
-		*/
-		
-		$uri = "";
-		$isPathOnly = !($userInfo !== "" || $host !== "");
-		if ($isPathOnly === false) {
-			$uri = (($scheme !== "") ? $scheme.":" : "")."//".(($userInfo !== "") ? $userInfo."@" : "").$host.(($port !== null) ? ":".$port : "");
-		}
-		
-		$uri .= (($path !== "" && str_starts_with($path, "/") === false) ? "/".$path : $path).(($query !== "") ? "?".$query : "").(($fragment !== "") ? "#".$fragment : "");
 		
 		if ($isPathOnly === true && str_starts_with($uri, "//") === true) {
 			$uri = "/".ltrim($uri, "/");

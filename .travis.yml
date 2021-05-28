@@ -9,7 +9,7 @@ install:
   - composer global require scrutinizer/ocular --no-interaction
 
 script:
-  - composer test -- --coverage-clover=build/coverage/clover.xml
+  - composer test -- --coverage-clover=clover.xml
 
 after_script:
-  - ~/.composer/vendor/bin/ocular code-coverage:upload --format=php-clover build/coverage/clover.xml
+  - ~/.composer/vendor/bin/ocular code-coverage:upload --format=php-clover clover.xml

@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace Kraber\Http\Message;
 
-use Psr\Http\Message\{ServerRequestInterface, StreamInterface, UploadedFileInterface, UriInterface};
+use Psr\Http\Message\{
+	ServerRequestInterface,
+	StreamInterface,
+	UploadedFileInterface,
+	UriInterface
+};
 use InvalidArgumentException;
 
 /**

@@ -302,7 +302,7 @@ class Uri implements UriInterface
 	 *
 	 * An empty scheme is equivalent to removing the scheme.
 	 *
-	 * @param string $scheme The scheme to use with the new instance.
+	 * @param string|null $scheme The scheme to use with the new instance.
 	 * @return static A new instance with the specified scheme.
 	 * @throws InvalidArgumentException for invalid scheme.
 	 */
@@ -335,7 +335,7 @@ class Uri implements UriInterface
 	 * information.
 	 *
 	 * @param string $user The user name to use for authority.
-	 * @param null|string $password The password associated with $user.
+	 * @param string|null $password The password associated with $user.
 	 * @return static A new instance with the specified user information.
 	 */
 	public function withUserInfo($user, $password = null) : static {
@@ -366,7 +366,7 @@ class Uri implements UriInterface
 	 *
 	 * An empty host value is equivalent to removing the host.
 	 *
-	 * @param string $host The hostname to use with the new instance.
+	 * @param string|null $host The hostname to use with the new instance.
 	 * @return static A new instance with the specified host.
 	 * @throws InvalidArgumentException for invalid host.
 	 */
@@ -400,7 +400,7 @@ class Uri implements UriInterface
 	 * A null value provided for the port is equivalent to removing the port
 	 * information.
 	 *
-	 * @param null|int $port The port to use with the new instance; a null value
+	 * @param int|null $port The port to use with the new instance; a null value
 	 *     removes the port information.
 	 * @return static A new instance with the specified port.
 	 * @throws InvalidArgumentException for invalid ports.
@@ -441,7 +441,7 @@ class Uri implements UriInterface
 	 * Users can provide both encoded and decoded path characters.
 	 * Implementations ensure the correct encoding as outlined in getPath().
 	 *
-	 * @param string $path The path to use with the new instance.
+	 * @param string|null $path The path to use with the new instance.
 	 * @return static A new instance with the specified path.
 	 * @throws InvalidArgumentException for invalid path.
 	 */
@@ -474,7 +474,7 @@ class Uri implements UriInterface
 	 *
 	 * An empty query string value is equivalent to removing the query string.
 	 *
-	 * @param string $query The query string to use with the new instance.
+	 * @param string|null $query The query string to use with the new instance.
 	 * @return static A new instance with the specified query string.
 	 * @throws InvalidArgumentException for invalid query string.
 	 */
@@ -507,7 +507,7 @@ class Uri implements UriInterface
 	 *
 	 * An empty fragment value is equivalent to removing the fragment.
 	 *
-	 * @param string $fragment The fragment to use with the new instance.
+	 * @param string|null $fragment The fragment to use with the new instance.
 	 * @return static A new instance with the specified fragment.
 	 * @throws InvalidArgumentException for invalid fragment.
 	 */

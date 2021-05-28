@@ -64,8 +64,8 @@ class ServerRequest extends Request implements ServerRequestInterface
 	/** @var array An array of UploadedFileInterface instances with files sent by the client. */
 	private array $uploadedFiles = [];
 	
-	/** @var null|array|object Parsed body. */
-	private null|array|object $parsedBody = null;
+	/** @var object|array|null Parsed body. */
+	private object|array|null $parsedBody = null;
 	
 	/** @var array Attributes derived from the request. */
 	private array $attributes = [];

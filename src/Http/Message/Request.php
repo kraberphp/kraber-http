@@ -45,7 +45,7 @@ class Request extends AbstractMessage implements RequestInterface
 	 * Request constructor.
 	 *
 	 * @param string $method
-	 * @param string|UriInterface|null $uri
+	 * @param UriInterface|string|null $uri
 	 * @param array $headers
 	 * @param StreamInterface|null $body
 	 * @param string $version
@@ -53,7 +53,7 @@ class Request extends AbstractMessage implements RequestInterface
 	 */
 	public function __construct(
 		string $method = "GET",
-		string|UriInterface|null $uri = null,
+		UriInterface|string|null $uri = null,
 		array $headers = [],
 		?StreamInterface $body = null,
 		string $version = "1.1"
@@ -233,7 +233,7 @@ class Request extends AbstractMessage implements RequestInterface
 		}
 		
 		$host = $this->uri->getHost();
-		if ($this->uri->getPort()) {
+		if ($this->uri->getPort() !== null) {
 			$host .= ':'.$this->uri->getPort();
 		}
 		

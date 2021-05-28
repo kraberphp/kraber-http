@@ -247,8 +247,8 @@ abstract class AbstractMessage implements MessageInterface
 	/**
 	 * Ensure withHeader/withAddedHeader arguments are valid.
 	 *
-	 * @param string $name Case-insensitive header field name to add.
-	 * @param string|string[] $value Header value(s).
+	 * @param mixed $name Case-insensitive header field name to add.
+	 * @param mixed $value Header value(s).
 	 * @throws InvalidArgumentException for invalid header names or values.
 	 */
 	private function validateHeaderNameAndHeaderValue($name, $value) : void {

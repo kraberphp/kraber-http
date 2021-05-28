@@ -27,9 +27,14 @@ use InvalidArgumentException;
  */
 class Response extends AbstractMessage implements ResponseInterface
 {
+	/** @var int Response code. */
 	protected int $code;
+	
+	/** @var string Reason phrase. */
 	protected string $reasonPhrase;
-	private static $httpStatusCodes = [
+	
+	/** @var string[] List of HTTP status code. */
+	private const HTTP_STATUS_CODE = [
 		100 => 'Continue',
 		101 => 'Switching Protocols',
 		102 => 'Processing',
@@ -110,6 +115,16 @@ class Response extends AbstractMessage implements ResponseInterface
 		599 => 'Network connect timeout error',
 	];
 	
+	/**
+	 * Response constructor.
+	 *
+	 * @param int $code
+	 * @param string $reasonPhrase
+	 * @param array $headers
+	 * @param StreamInterface|null $body
+	 * @param string $version
+	 * @throws InvalidArgumentException For unknown HTTP status code.
+	 */
 	public function __construct(
 		int $code = 200,
 		string $reasonPhrase = '',
@@ -119,12 +134,20 @@ class Response extends AbstractMessage implements ResponseInterface
 	) {
 		parent::__construct($headers, $body, $version);
 		
-		if (!isset(self::$httpStatusCodes[$code])) {
-			throw new InvalidArgumentException("Invalid HTTP status code.");
-		}
+		$this->validateHttpStatusCode($code);
 		
 		$this->code = $code;
-		$this->reasonPhrase = empty($reasonPhrase) ? self::$httpStatusCodes[$code] : $reasonPhrase;
+		$this->reasonPhrase = empty($reasonPhrase) ? self::HTTP_STATUS_CODE[$code] : $reasonPhrase;
+	}
+	
+	/**
+	 * @param int $code HTTP status code to check.
+	 * @throws InvalidArgumentException For unknown HTTP status code.
+	 */
+	private function validateHttpStatusCode(int $code) {
+		if (!isset(self::HTTP_STATUS_CODE[$code])) {
+			throw new InvalidArgumentException("Invalid HTTP status code provided.");
+		}
 	}
 	
 	/**
@@ -157,16 +180,18 @@ class Response extends AbstractMessage implements ResponseInterface
 	 *     provided status code; if none is provided, implementations MAY
 	 *     use the defaults as suggested in the HTTP specification.
 	 * @return static
-	 * @throws \InvalidArgumentException For invalid status code arguments.
+	 * @throws InvalidArgumentException For invalid status code arguments.
 	 */
 	public function withStatus($code, $reasonPhrase = '') : static {
-		if (!is_int($code) || !isset(self::$httpStatusCodes[$code])) {
-			throw new InvalidArgumentException("Invalid HTTP status code.");
+		if (!is_int($code)) {
+			throw new InvalidArgumentException("Invalid argument type provided. HTTP status code must be an int.");
 		}
+		
+		$this->validateHttpStatusCode($code);
 		
 		$newResponse = clone $this;
 		$newResponse->code = $code;
-		$newResponse->reasonPhrase = empty($reasonPhrase) ? self::$httpStatusCodes[$code] : $reasonPhrase;
+		$newResponse->reasonPhrase = empty($reasonPhrase) ? self::HTTP_STATUS_CODE[$code] : $reasonPhrase;
 		
 		return $newResponse;
 	}

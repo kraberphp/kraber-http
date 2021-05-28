@@ -8,7 +8,7 @@
 
 </div>
 
-Very strict PSR-7 & PSR-17 implementation.
+PSR-7 & PSR-17 library for PHP 8.0, strict implementation.
 
 # Installation
 ```bash

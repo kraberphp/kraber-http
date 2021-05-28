@@ -1,0 +1,7 @@
+language: php
+php:
+  - 8.0.2
+  - nightly
+install:
+  - composer install
+  - composer dump-autoload

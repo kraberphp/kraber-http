@@ -71,16 +71,16 @@ class Uri implements UriInterface
 		list($userInfo, $host, $port) = [$this->getUserInfo(), $this->getHost(), $this->getPort()];
 		
 		$authority = "";
-		if ($userInfo !== "") {
-			$authority = $userInfo."@";
-		}
 		
 		if ($host !== "") {
+			if ($userInfo !== "") {
+				$authority = $userInfo."@";
+			}
+			
 			$authority .= $host;
-		}
-		
-		if ($port !== null) {
-			$authority .= ":".$port;
+			if ($port !== null) {
+				$authority .= ":".$port;
+			}
 		}
 		
 		return $authority;
@@ -471,27 +471,37 @@ class Uri implements UriInterface
 	 */
 	public function __toString() : string {
 		$scheme = $this->getScheme();
-		$userInfo = $this->getUserInfo();
-		$host = $this->getHost();
-		$port = $this->getPort();
+		$authority = $this->getAuthority();
 		$path = $this->getPath();
 		$query = $this->getQuery();
 		$fragment = $this->getFragment();
 		
 		$uri = "";
-		$isPathOnly = ($userInfo === "" && $host === "");
-		if ($isPathOnly === false) {
-			$uri = ($scheme !== "") ? $scheme.":" : "";
-			$uri .= "//";
-			$uri .= ($userInfo !== "") ? $userInfo."@" : "";
-			$uri .= $host;
-			$uri .= ($host !== "" && $port !== null) ? ":".$port : "";
+		if ($scheme !== "") {
+			$uri .= $scheme.":";
 		}
-		$uri .= ($path !== "" && str_starts_with($path, "/") === false) ? "/".$path : $path;
-		$uri .= ($query !== "") ? "?".$query : "";
-		$uri .= ($fragment !== "") ? "#".$fragment : "";
 		
-		if ($isPathOnly === true && str_starts_with($uri, "//") === true) {
+		if ($authority !== "") {
+			$uri .= "//".$authority;
+		}
+		
+		if ($path !== "") {
+			if (str_starts_with($path, "/") === false) {
+				$uri .= "/";
+			}
+			
+			$uri .= $path;
+		}
+		
+		if ($query !== "") {
+			$uri .= "?".$query;
+		}
+		
+		if ($fragment !== "") {
+			$uri .= "#".$fragment;
+		}
+		
+		if ($authority === "" && str_starts_with($uri, "//") === true) {
 			$uri = "/".ltrim($uri, "/");
 		}
 		

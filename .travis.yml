@@ -1,7 +1,15 @@
 language: php
+
 php:
   - 8.0.2
   - nightly
+
 install:
-  - composer install
-  - composer dump-autoload
+  - composer install --no-interaction --no-suggest
+
+script:
+  - composer test -- --coverage-clover=build/coverage/clover.xml
+
+after_script:
+  - wget https://scrutinizer-ci.com/ocular.phar
+  - php ocular.phar code-coverage:upload --format=php-clover build/coverage/clover.xml

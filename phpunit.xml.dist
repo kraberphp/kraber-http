@@ -34,14 +34,14 @@
         </testsuite>
     </testsuites>
 
-    <coverage cacheDirectory="build/coverage/cache/"
+    <coverage cacheDirectory="./build/coverage/cache"
               includeUncoveredFiles="true"
               processUncoveredFiles="true"
               pathCoverage="false"
               ignoreDeprecatedCodeUnits="true"
               disableCodeCoverageIgnore="true">
         <include>
-            <directory suffix=".php">./src/</directory>
+            <directory suffix=".php">./src</directory>
         </include>
     </coverage>
 

@@ -5,11 +5,11 @@ php:
   - nightly
 
 install:
-  - composer install --no-interaction --no-suggest
+  - composer install --no-interaction
+  - composer global require scrutinizer/ocular --no-interaction
 
 script:
-  - composer test -- --coverage-clover=./clover.xml
+  - composer test -- --coverage-clover=build/coverage/clover.xml
 
 after_script:
-  - wget https://scrutinizer-ci.com/ocular.phar
-  - php ocular.phar code-coverage:upload --format=php-clover ./clover.xml
+  - ~/.composer/vendor/bin/ocular code-coverage:upload --format=php-clover build/coverage/clover.xml

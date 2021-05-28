@@ -9,7 +9,10 @@ use Psr\Http\Message\{
 	ServerRequestInterface,
 	UriInterface
 };
-use Kraber\Http\Message\ServerRequest;
+use Kraber\Http\Message\{
+	ServerRequest,
+	Uri
+};
 
 class ServerRequestFactory implements ServerRequestFactoryInterface
 {
@@ -30,6 +33,10 @@ class ServerRequestFactory implements ServerRequestFactoryInterface
 	 * @return ServerRequestInterface
 	 */
 	public function createServerRequest(string $method, $uri, array $serverParams = []) : ServerRequestInterface {
+		if (!($uri instanceof UriInterface)) {
+			$uri = new Uri($uri);
+		}
+		
 		return new ServerRequest($method, $uri, serverParams: $serverParams);
 	}
 }

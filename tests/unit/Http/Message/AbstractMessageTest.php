@@ -1,8 +1,8 @@
 <?php
 
-namespace Kraber\Test\Http\Message;
+namespace Kraber\Test\Unit\Http\Message;
 
-use Kraber\Test\TestCase;
+use Kraber\Test\Unit\Http\TestCase;
 use Psr\Http\Message\StreamInterface;
 use Kraber\Http\Message\{
 	Stream,

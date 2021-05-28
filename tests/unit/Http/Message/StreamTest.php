@@ -1,13 +1,13 @@
 <?php
 
-namespace Kraber\Test\Http\Message;
+namespace Kraber\Test\Unit\Http\Message;
 
-use Kraber\Test\TestCase;
+use Kraber\Test\Unit\Http\TestCase;
 use Kraber\Http\Message\Stream;
 use InvalidArgumentException;
 use RuntimeException;
 
-class StreamTest extends \PHPUnit\Framework\TestCase
+class StreamTest extends TestCase
 {
 	public function testConstructorThrowsExceptionOnInvalidArgument() {
 		$this->expectException(InvalidArgumentException::class);

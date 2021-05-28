@@ -9,6 +9,6 @@ class UploadedFileTest extends UploadedFileIntegrationTest
 {
 	public function createSubject()
 	{
-		return new UploadedFile(tempnam(sys_get_temp_dir(), 'foo'), "filename.txt", "text/plain", null, UPLOAD_ERR_OK);
+		return new UploadedFile(tempnam(sys_get_temp_dir(), 'foo'), null, UPLOAD_ERR_OK, "filename.txt", "text/plain");
 	}
 }

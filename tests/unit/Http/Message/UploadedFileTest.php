@@ -27,53 +27,53 @@ class UploadedFileTest extends TestCase
 	private function getValidUploadedFile() : UploadedFile{
 		return new UploadedFile(
 			$this->vfsFile->url(),
+			strlen($this->vfsFile->getContent()),
+			UPLOAD_ERR_OK,
 			$this->vfsFile->getName(),
 			"text/plain",
-			strlen($this->vfsFile->getContent()),
-			UPLOAD_ERR_OK
 		);
 	}
 	
 	private function getUnreadableUploadedFile() : UploadedFile{
 		return new UploadedFile(
 			$this->vfsFileUnreadable->url(),
-			$this->vfsFileUnreadable->getName(),
-			"text/plain",
 			strlen($this->vfsFileUnreadable->getContent()),
-			UPLOAD_ERR_OK
+			UPLOAD_ERR_OK,
+			$this->vfsFileUnreadable->getName(),
+			"text/plain"
 		);
 	}
 	
 	private function getErrorUploadedFile() : UploadedFile{
 		return new UploadedFile(
 			$this->vfsFile->url(),
-			$this->vfsFile->getName(),
-			"text/plain",
 			strlen($this->vfsFile->getContent()),
-			UPLOAD_ERR_INI_SIZE
+			UPLOAD_ERR_INI_SIZE,
+			$this->vfsFile->getName(),
+			"text/plain"
 		);
 	}
 	
 	public function testConstructorInitializesProperties() {
-		$uploadedFile = $this->getValidUploadedFile();
+		$uploadedFile = new UploadedFile("filename.txt");
 		
 		$this->assertIsString($this->getPropertyValue($uploadedFile, 'file'));
 		$this->assertNull($this->getPropertyValue($uploadedFile, 'stream'));
-		$this->assertIsString($this->getPropertyValue($uploadedFile, 'clientFilename'));
-		$this->assertIsString($this->getPropertyValue($uploadedFile, 'clientMediaType'));
-		$this->assertIsInt($this->getPropertyValue($uploadedFile, 'size'));
+		$this->assertNull($this->getPropertyValue($uploadedFile, 'size'));
 		$this->assertIsInt($this->getPropertyValue($uploadedFile, 'error'));
 		$this->assertSame(UPLOAD_ERR_OK, $this->getPropertyValue($uploadedFile, 'error'));
+		$this->assertNull($this->getPropertyValue($uploadedFile, 'clientFilename'));
+		$this->assertNull($this->getPropertyValue($uploadedFile, 'clientMediaType'));
 	}
 	
 	public function testConstructorThrowsExceptionOnInvalidFileArgument() {
 		$this->expectException(InvalidArgumentException::class);
 		$uploadedFile = new UploadedFile(
 			42,
+			strlen($this->vfsFile->getContent()),
+			UPLOAD_ERR_OK,
 			$this->vfsFile->getName(),
 			"text/plain",
-			strlen($this->vfsFile->getContent()),
-			UPLOAD_ERR_OK
 		);
 	}
 	
@@ -81,10 +81,10 @@ class UploadedFileTest extends TestCase
 		$this->expectException(InvalidArgumentException::class);
 		$uploadedFile = new UploadedFile(
 			$this->vfsFile->url(),
-			$this->vfsFile->getName(),
-			"text/plain",
 			strlen($this->vfsFile->getContent()),
-			42
+			42,
+			$this->vfsFile->getName(),
+			"text/plain"
 		);
 	}
 	
@@ -94,10 +94,10 @@ class UploadedFileTest extends TestCase
 		
 		$uploadedFile = new UploadedFile(
 			$handle,
-			"filename.txt",
-			"text/plain",
 			ftell($handle),
-			UPLOAD_ERR_OK
+			UPLOAD_ERR_OK,
+			"filename.txt",
+			"text/plain"
 		);
 		
 		$stream = $uploadedFile->getStream();
@@ -167,10 +167,10 @@ class UploadedFileTest extends TestCase
 		
 		$uploadedFile = new UploadedFile(
 			$src,
+			$src->getSize(),
+			UPLOAD_ERR_OK,
 			null,
 			"text/plain",
-			$src->getSize(),
-			UPLOAD_ERR_OK
 		);
 		$uploadedFile->moveTo($dst->url());
 		
@@ -188,10 +188,10 @@ class UploadedFileTest extends TestCase
 		$this->expectException(RuntimeException::class);
 		$uploadedFile = new UploadedFile(
 			$src,
-			null,
-			"text/plain",
 			$src->getSize(),
-			UPLOAD_ERR_OK
+			UPLOAD_ERR_OK,
+			null,
+			"text/plain"
 		);
 		$uploadedFile->moveTo($dst->url());
 	}

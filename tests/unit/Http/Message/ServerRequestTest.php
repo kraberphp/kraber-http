@@ -118,7 +118,7 @@ class ServerRequestTest extends TestCase
 	
 	public function testWithUploadedFiles() {
 		$uploadedFiles = [
-			new UploadedFile("filename.txt", null, null, null, UPLOAD_ERR_OK)
+			new UploadedFile("filename.txt")
 		];
 		
 		$serverRequest = new ServerRequest();
@@ -130,7 +130,7 @@ class ServerRequestTest extends TestCase
 	
 	public function testWithUploadedFilesThrowsExceptionOnInvalidArgument() {
 		$uploadedFiles = [
-			new UploadedFile("filename.txt", null, null, null, UPLOAD_ERR_OK),
+			new UploadedFile("filename.txt"),
 			'foo'
 		];
 		

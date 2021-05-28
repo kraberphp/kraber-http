@@ -28,17 +28,17 @@ class UploadedFile implements UploadedFileInterface
 	/** @var StreamInterface|null Stream of uploaded file contents. */
 	private ?StreamInterface $stream = null;
 	
-	/** @var string|null Filename as sent by the client. */
-	private ?string $clientFilename = "";
-	
-	/** @var string|null Mime as sent by the client. */
-	private ?string $clientMediaType = "";
-	
 	/** @var int|null File size as sent by the client. */
 	private ?int $size = null;
 	
 	/** @var int Error status. */
 	private int $error = UPLOAD_ERR_OK;
+	
+	/** @var string|null Filename as sent by the client. */
+	private ?string $clientFilename = "";
+	
+	/** @var string|null Mime as sent by the client. */
+	private ?string $clientMediaType = "";
 	
 	/** @var bool Has the downloaded file been moveTo() ? */
 	private bool $hasMoveTo = false;
@@ -65,7 +65,7 @@ class UploadedFile implements UploadedFileInterface
 	 * @param int $error
 	 * @throws InvalidArgumentException
 	 */
-	public function __construct($fileOrStream, ?string $clientFilename, ?string $clientMediaType, ?int $size, int $error) {
+	public function __construct($fileOrStream, ?int $size = null, int $error = UPLOAD_ERR_OK, ?string $clientFilename = null, ?string $clientMediaType = null) {
 		if (!isset(self::UPLOAD_ERRORS[$error])) {
 			throw new InvalidArgumentException("Invalid error status. Error status must be the value of one of the 'UPLOAD_ERR_*' constants.");
 		}
@@ -83,10 +83,10 @@ class UploadedFile implements UploadedFileInterface
 			throw new InvalidArgumentException("Invalid file provided. File must be a string, a resource or an object implementing StreamInterface.");
 		}
 		
-		$this->clientFilename = $clientFilename;
-		$this->clientMediaType = $clientMediaType;
 		$this->size = $size;
 		$this->error = $error;
+		$this->clientFilename = $clientFilename;
+		$this->clientMediaType = $clientMediaType;
 	}
 	
 	/**

@@ -1,5 +1,18 @@
 {
     "name": "fpisani/kraber-http",
+    "type": "library",
+    "description": "PSR-7 & PSR-17 library for PHP 8.0, strict implementation.",
+    "keywords": ["http", "response", "request", "stream", "uri", "http-message", "psr","psr-7", "psr-17"],
+    "homepage": "https://github.com/f-pisani/kraber-http",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Florian Pisani",
+            "email": "pisani.florian@gmail.com",
+            "homepage": "http://seld.be",
+            "role": "Developer"
+        }
+    ],
     "autoload": {
         "psr-4": {"Kraber\\": "src/"}
     },

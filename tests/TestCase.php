@@ -1,6 +1,6 @@
 <?php
 
-namespace Kraber\Test\Unit\Http;
+namespace Kraber\Test;
 
 use ReflectionClass;
 

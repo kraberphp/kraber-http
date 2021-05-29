@@ -2,7 +2,7 @@
 
 namespace Kraber\Test\Unit\Http\Message;
 
-use Kraber\Test\Unit\Http\TestCase;
+use Kraber\Test\TestCase;
 use Kraber\Http\Message\{
 	ServerRequest,
 	UploadedFile

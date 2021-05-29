@@ -30,6 +30,6 @@
         "psr/http-factory": "^1.0"
     },
     "scripts": {
-        "test": "vendor/phpunit/phpunit/phpunit"
+        "test": "vendor/bin/phpunit"
     }
 }

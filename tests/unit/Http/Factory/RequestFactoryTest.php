@@ -2,7 +2,7 @@
 
 namespace Kraber\Test\Unit\Http\Factory;
 
-use Kraber\Test\Unit\Http\TestCase;
+use Kraber\Test\TestCase;
 use Kraber\Http\Factory\RequestFactory;
 
 class RequestFactoryTest extends TestCase

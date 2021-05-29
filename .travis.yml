@@ -13,7 +13,7 @@ env:
     - XDEBUG_MODE=coverage
 
 install:
-  - composer install --dev --no-interaction
+  - composer install --no-interaction
   - composer require scrutinizer/ocular --no-interaction
 
 script:

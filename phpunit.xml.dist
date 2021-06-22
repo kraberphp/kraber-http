@@ -22,35 +22,35 @@
          testdox="true">
     <testsuites>
         <testsuite name="Unit">
-            <directory>./tests/unit</directory>
+            <directory>tests/unit/</directory>
         </testsuite>
 
         <testsuite name="PSR-7 Integration">
-            <directory>./tests/integration</directory>
+            <directory>tests/integration/</directory>
         </testsuite>
 
         <testsuite name="PSR-17 Integration">
-            <directory>./vendor/http-interop/http-factory-tests/test</directory>
+            <directory>vendor/http-interop/http-factory-tests/test/</directory>
         </testsuite>
     </testsuites>
 
-    <coverage cacheDirectory="./build/coverage/cache"
+    <coverage cacheDirectory="build/coverage/cache/"
               includeUncoveredFiles="true"
               processUncoveredFiles="true"
               pathCoverage="false"
               ignoreDeprecatedCodeUnits="true"
               disableCodeCoverageIgnore="true">
         <include>
-            <directory suffix=".php">./src</directory>
+            <directory suffix=".php">src/</directory>
         </include>
     </coverage>
 
     <php>
-        <const name="REQUEST_FACTORY" value="Kraber\Http\Factory\RequestFactory"/>
-        <const name="RESPONSE_FACTORY" value="Kraber\Http\Factory\ResponseFactory"/>
-        <const name="SERVER_REQUEST_FACTORY" value="Kraber\Http\Factory\ServerRequestFactory"/>
-        <const name="STREAM_FACTORY" value="Kraber\Http\Factory\StreamFactory"/>
-        <const name="UPLOADED_FILE_FACTORY" value="Kraber\Http\Factory\UploadedFileFactory"/>
-        <const name="URI_FACTORY" value="Kraber\Http\Factory\UriFactory"/>
+        <const name="REQUEST_FACTORY" value="Kraber\Http\Factory\RequestFactory" />
+        <const name="RESPONSE_FACTORY" value="Kraber\Http\Factory\ResponseFactory" />
+        <const name="SERVER_REQUEST_FACTORY" value="Kraber\Http\Factory\ServerRequestFactory" />
+        <const name="STREAM_FACTORY" value="Kraber\Http\Factory\StreamFactory" />
+        <const name="UPLOADED_FILE_FACTORY" value="Kraber\Http\Factory\UploadedFileFactory" />
+        <const name="URI_FACTORY" value="Kraber\Http\Factory\UriFactory" />
     </php>
 </phpunit>

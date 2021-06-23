@@ -17,7 +17,7 @@ install:
   - composer require scrutinizer/ocular --no-interaction
 
 before_script:
-    - mkdir -p build/{logs, coverage}
+  - mkdir -p build/{logs, coverage}
 
 script:
   - composer ci
